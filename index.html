@@ -2,17 +2,134 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Aku</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#120a2e">
+<title>Game Shafa · by @shafaauray</title>
 <style>
-  body { margin:0; min-height:100vh; background:#05060f; color:#fff; font-family:"Courier New",monospace; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; }
-  h1 { color:#00f0ff; text-shadow:0 0 20px #00f0ff; font-size:48px; margin:0; }
-  a { color:#ff2e88; border:2px solid #ff2e88; padding:16px 32px; text-decoration:none; font-size:22px; box-shadow:0 0 15px #ff2e88; transition:.2s; }
-  a:hover { background:#ff2e88; color:#05060f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff;
+    background: #120a2e; overflow-x: hidden;
+    padding: calc(env(safe-area-inset-top) + 40px) 20px calc(env(safe-area-inset-bottom) + 30px);
+    display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+  }
+  /* animated background blobs */
+  .bg { position: fixed; inset: 0; z-index: -1; overflow: hidden;
+    background: radial-gradient(circle at 50% 120%, #3a1c71 0%, #120a2e 60%); }
+  .blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; animation: float 14s ease-in-out infinite alternate; }
+  .b1 { width: 340px; height: 340px; background: #ff2e88; left: -80px; top: 8%; }
+  .b2 { width: 300px; height: 300px; background: #00c8ff; right: -60px; top: 35%; animation-delay: -5s; }
+  .b3 { width: 280px; height: 280px; background: #ffb703; left: 30%; bottom: -100px; animation-delay: -9s; }
+  @keyframes float { to { transform: translate(40px, -50px) scale(1.15); } }
+  .stars { position: absolute; inset: 0; background-image:
+    radial-gradient(1.5px 1.5px at 20% 30%, #fff8 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 70% 15%, #fff8 50%, transparent 51%),
+    radial-gradient(1px 1px at 40% 70%, #fff6 50%, transparent 51%),
+    radial-gradient(1px 1px at 85% 60%, #fff6 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 10% 85%, #fff7 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 45%, #fff5 50%, transparent 51%);
+    background-size: 300px 300px; }
+
+  header { text-align: center; margin-bottom: 34px; }
+  h1 { margin: 0; font-size: clamp(46px, 13vw, 92px); font-weight: 900; line-height: .9; letter-spacing: 1px;
+    transform: rotate(-3deg); text-shadow: 0 5px 0 #ff2e88, 0 9px 0 rgba(0,0,0,.25), 0 0 40px rgba(255,46,136,.55); }
+  h1 span { color: #ffd23f; text-shadow: 0 5px 0 #e0571c, 0 9px 0 rgba(0,0,0,.25), 0 0 40px rgba(255,200,60,.5); }
+  .tag { margin-top: 18px; font-weight: 700; opacity: .85; font-size: clamp(14px, 3.8vw, 18px); }
+
+  .grid { width: 100%; max-width: 880px; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .card { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: 230px;
+    padding: 22px; border-radius: 26px; text-decoration: none; color: #fff; overflow: hidden;
+    box-shadow: 0 14px 30px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.12);
+    transition: transform .2s cubic-bezier(.2,1.4,.4,1), box-shadow .2s; }
+  .card:hover, .card:focus-visible { transform: translateY(-6px) scale(1.02); box-shadow: 0 22px 40px rgba(0,0,0,.45), inset 0 0 0 2px rgba(255,255,255,.3); }
+  .card:active { transform: scale(.98); }
+  .card .art { position: absolute; inset: 0; pointer-events: none; }
+  .card h2 { position: relative; margin: 0; font-size: 28px; font-weight: 900; text-shadow: 0 3px 0 rgba(0,0,0,.3); }
+  .card p { position: relative; margin: 6px 0 14px; font-weight: 600; opacity: .9; font-size: 15px; }
+  .play { position: relative; align-self: flex-start; padding: 9px 22px; border-radius: 999px; font-weight: 900; font-size: 16px;
+    background: #fff; color: #120a2e; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .chips { position: relative; display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .chip { font-size: 11px; font-weight: 800; letter-spacing: .5px; padding: 4px 9px; border-radius: 999px; background: rgba(0,0,0,.3); }
+
+  /* Neon Survivor card */
+  .neon { background: #070816; }
+  .neon .art { background:
+      radial-gradient(circle at 75% 30%, rgba(0,240,255,.35), transparent 45%),
+      radial-gradient(circle at 20% 20%, rgba(184,77,255,.3), transparent 40%),
+      linear-gradient(rgba(0,240,255,.07) 1px, transparent 1px) 0 0 / 28px 28px,
+      linear-gradient(90deg, rgba(0,240,255,.07) 1px, transparent 1px) 0 0 / 28px 28px; }
+  .neon .ship { position: absolute; right: 26%; top: 22%; width: 0; height: 0;
+    border-left: 22px solid transparent; border-right: 22px solid transparent; border-bottom: 44px solid #00f0ff;
+    filter: drop-shadow(0 0 10px #00f0ff); transform: rotate(35deg); }
+  .neon .en { position: absolute; width: 26px; height: 26px; border: 3px solid #ff2e88; box-shadow: 0 0 14px #ff2e88, inset 0 0 8px #ff2e88;
+    animation: spin 6s linear infinite; }
+  .neon .e1 { right: 10%; top: 12%; } .neon .e2 { right: 40%; top: 8%; width: 18px; height: 18px; border-color: #ffe600; box-shadow: 0 0 14px #ffe600; }
+  .neon .e3 { right: 14%; top: 42%; width: 34px; height: 34px; border-color: #ff8a00; box-shadow: 0 0 14px #ff8a00; animation-duration: 9s; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Robo Rush card */
+  .robo { background: linear-gradient(#4f9dff 0%, #9fd0ff 45%, #ffe1c2 70%, #8b7c6c 70%); }
+  .robo .art::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 30%;
+    background: repeating-linear-gradient(90deg, transparent 0 18px, rgba(106,75,53,.8) 18px 26px); opacity: .6; }
+  .robo .bld { position: absolute; bottom: 30%; width: 46px; border-radius: 4px 4px 0 0;
+    background-image: linear-gradient(rgba(52,73,107,.8) 40%, transparent 40%); background-size: 12px 14px; }
+  .robo .bot { position: absolute; right: 18%; bottom: 26%; width: 50px; animation: bob .5s ease-in-out infinite alternate; }
+  .robo .bot i { display: block; margin: 0 auto; border-radius: 6px; }
+  .robo .h { width: 44px; height: 36px; background: #f4f1ea; position: relative; }
+  .robo .h::after { content: ""; position: absolute; left: 6px; right: 6px; top: 9px; height: 16px; border-radius: 4px; background: #121a2b;
+    box-shadow: inset 8px 0 0 -4px #3ff0ff; }
+  .robo .b { width: 38px; height: 30px; background: #f4f1ea; margin-top: 3px !important; box-shadow: inset 0 -8px 0 #ff8a3d; }
+  @keyframes bob { to { transform: translateY(-6px); } }
+  .robo .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 25%, rgba(20,10,46,.75)); }
+  .robo h2, .robo p { text-shadow: 0 2px 6px rgba(0,0,0,.45); }
+
+  /* coming soon */
+  .soon { background: rgba(255,255,255,.05); border: 2px dashed rgba(255,255,255,.3); box-shadow: none; justify-content: center; align-items: center; text-align: center; cursor: default; }
+  .soon:hover { transform: none; box-shadow: none; }
+  .soon .q { font-size: 54px; font-weight: 900; opacity: .5; }
+
+  footer { margin-top: auto; padding-top: 40px; text-align: center; font-weight: 800; font-size: 16px; opacity: .9; }
+  footer b { background: linear-gradient(90deg, #ff2e88, #ffd23f, #00f0ff); -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 18px; }
 </style>
 </head>
 <body>
-  <h1>GAME AKU</h1>
-  <a href="neon-survivor/">▶ Neon Survivor</a>
+  <div class="bg"><div class="stars"></div><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+
+  <header>
+    <h1>GAME<br><span>SHAFA</span></h1>
+    <div class="tag">Pilih game, langsung main. Bisa di HP, tablet &amp; laptop!</div>
+  </header>
+
+  <main class="grid">
+    <a class="card neon" href="neon-survivor.html">
+      <div class="art"><div class="ship"></div><div class="en e1"></div><div class="en e2"></div><div class="en e3"></div></div>
+      <div class="chips"><span class="chip">🔫 TEMBAK-TEMBAKAN</span><span class="chip">2D NEON</span></div>
+      <h2>Neon Survivor</h2>
+      <p>Bertahan dari serbuan musuh neon &amp; kalahkan boss tiap 5 wave.</p>
+      <span class="play">▶ MAIN</span>
+    </a>
+
+    <a class="card robo" href="robo-rush.html">
+      <div class="art">
+        <div class="bld" style="left:6%;height:42%;background-color:#ff9b85"></div>
+        <div class="bld" style="left:24%;height:30%;background-color:#c9b6ff"></div>
+        <div class="bld" style="left:42%;height:48%;background-color:#9be3b1"></div>
+        <div class="bot"><i class="h"></i><i class="b"></i></div>
+      </div>
+      <div class="chips"><span class="chip">🏃 LARI</span><span class="chip">3D</span></div>
+      <h2>Robo Rush 3D</h2>
+      <p>Lari, lompat, nunduk &amp; naik ke atap kereta sambil kumpulin kristal.</p>
+      <span class="play">▶ MAIN</span>
+    </a>
+
+    <div class="card soon">
+      <div class="q">?</div>
+      <h2 style="font-size:22px">Segera hadir…</h2>
+      <p>Game berikutnya lagi dibikin 👀</p>
+    </div>
+  </main>
+
+  <footer>dibuat oleh <b>@shafaauray</b></footer>
 </body>
 </html>
