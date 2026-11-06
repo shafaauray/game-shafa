@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#141a2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Shafa Karate 3D · by @shafaauray</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #141a2a; touch-action: none; overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #ui { position: fixed; inset: 0; pointer-events: none; color: #fff; }
+  .hidden { display: none !important; }
+  button, a.btn { font-family: inherit; pointer-events: auto; cursor: pointer; border: 0; }
+  .glass { background: rgba(10,15,30,.45); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+  #hud { position: absolute; left: 0; right: 0; top: 0;
+    padding: calc(env(safe-area-inset-top) + 8px) calc(env(safe-area-inset-right) + 10px) 0 calc(env(safe-area-inset-left) + 10px); }
+  .bars { display: flex; align-items: flex-start; gap: 10px; }
+  .side { flex: 1; min-width: 0; }
+  .name { font-weight: 900; font-size: clamp(13px, 3.4vw, 18px); text-shadow: 0 2px 0 rgba(0,0,0,.4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .name span { font-size: .75em; padding: 1px 7px; border-radius: 6px; margin: 0 4px; vertical-align: middle; }
+  .aka .name span { background: #e53935; } .ao .name span { background: #1e63d6; }
+  .ao { text-align: right; }
+  .bar { height: clamp(12px, 2.6vw, 18px); border-radius: 10px; background: rgba(0,0,0,.5); overflow: hidden; margin-top: 4px;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.4); position: relative; }
+  .bar i { position: absolute; top: 0; bottom: 0; transition: width .15s; }
+  .bar b { position: absolute; top: 0; bottom: 0; background: rgba(255,255,255,.75); transition: width .6s .25s; }
+  .aka .bar i { left: 0; background: linear-gradient(90deg, #ff5a4f, #ff9a3c); } .aka .bar b { left: 0; }
+  .ao .bar i { right: 0; background: linear-gradient(270deg, #3a8bff, #39d4ff); } .ao .bar b { right: 0; }
+  .pts { margin-top: 4px; font-weight: 800; font-size: clamp(11px, 2.8vw, 14px); opacity: .95; display: flex; gap: 6px; align-items: center; }
+  .ao .pts { justify-content: flex-end; }
+  .rw { display: inline-flex; gap: 3px; } .rw i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(255,255,255,.7); }
+  .rw i.on { background: #ffd23f; border-color: #ffd23f; }
+  .mid { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  #timer { font-weight: 900; font-size: clamp(22px, 5vw, 32px); min-width: 64px; text-align: center; padding: 2px 10px; border-radius: 12px; }
+  #round { font-size: 11px; font-weight: 800; letter-spacing: 1px; opacity: .85; }
+  .iconbtn { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; }
+  .iconbtn svg { width: 18px; height: 18px; fill: #fff; }
+  #topbtns { display: flex; gap: 6px; }
+
+  #callout { position: absolute; left: 50%; top: 30%; transform: translate(-50%,-50%) scale(.6); opacity: 0; text-align: center; white-space: nowrap;
+    font-weight: 900; font-size: clamp(30px, 8vw, 64px); letter-spacing: 2px; text-shadow: 0 4px 0 rgba(0,0,0,.35), 0 0 30px rgba(0,0,0,.4);
+    transition: transform .25s cubic-bezier(.2,1.6,.4,1), opacity .25s; }
+  #callout small { display: block; font-size: .38em; letter-spacing: 3px; opacity: .9; margin-top: 4px; }
+  #callout.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  #flash { position: absolute; inset: 0; box-shadow: inset 0 0 120px 40px rgba(255,40,60,.6); opacity: 0; transition: opacity .35s; }
+  #credit { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 8px); font-weight: 800; font-size: 12px; opacity: .7; text-shadow: 0 1px 3px rgba(0,0,0,.6); white-space: nowrap; }
+  #rotate { position: absolute; left: 50%; top: 54%; transform: translateX(-50%); padding: 8px 14px; border-radius: 14px; font-weight: 800; font-size: 13px; white-space: nowrap; transition: opacity .6s; }
+
+  /* touch controls */
+  #controls { position: absolute; left: 0; right: 0; bottom: 0; height: 0; }
+  .pad { position: absolute; bottom: calc(env(safe-area-inset-bottom) + 26px); display: flex; gap: 12px; }
+  #padL { left: calc(env(safe-area-inset-left) + 16px); }
+  #padR { right: calc(env(safe-area-inset-right) + 16px); display: grid; grid-template-columns: repeat(2, auto); gap: 10px; }
+  .cbtn { pointer-events: auto; width: clamp(62px, 15vw, 78px); height: clamp(62px, 15vw, 78px); border-radius: 50%; color: #fff; font-weight: 900;
+    display: grid; place-items: center; font-size: 12px; line-height: 1.1; text-align: center; background: rgba(255,255,255,.14);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.45), 0 6px 14px rgba(0,0,0,.3); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); touch-action: none; }
+  .cbtn em { display: block; font-style: normal; font-size: 24px; }
+  .cbtn.on { background: rgba(255,255,255,.4); transform: scale(.94); }
+  #bP { background: rgba(229,57,53,.55); } #bK { background: rgba(255,140,40,.55); } #bH { background: rgba(255,200,40,.5); } #bB { background: rgba(60,140,255,.5); }
+
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    pointer-events: auto; padding: 22px; text-align: center; overflow: auto; }
+  .screen { justify-content: flex-start; }
+  .screen > :first-child { margin-top: auto; } .screen > :last-child { margin-bottom: auto; }
+  .dim { background: radial-gradient(ellipse at center, rgba(15,20,40,.4), rgba(10,12,25,.82)); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .title { font-size: clamp(44px, 12vw, 96px); font-weight: 900; line-height: .86; letter-spacing: 2px; transform: rotate(-3deg);
+    text-shadow: 0 6px 0 #b71c1c, 0 10px 0 rgba(0,0,0,.25), 0 0 40px rgba(255,60,60,.5); }
+  .title span { color: #fff; text-shadow: 0 6px 0 #0d47a1, 0 10px 0 rgba(0,0,0,.25), 0 0 40px rgba(60,120,255,.5); }
+  .title small { display: block; font-size: .3em; letter-spacing: 8px; color: #ffd23f; text-shadow: 0 3px 0 #8a5a00; margin-top: 8px; }
+  .sub { font-weight: 800; font-size: clamp(13px, 3.6vw, 18px); text-shadow: 0 2px 0 rgba(0,0,0,.4); max-width: 560px; }
+  .vs { display: flex; gap: 10px; align-items: center; font-weight: 900; font-size: clamp(14px, 3.6vw, 18px); }
+  .tagA, .tagB { padding: 6px 14px; border-radius: 10px; box-shadow: 0 4px 0 rgba(0,0,0,.25); }
+  .tagA { background: #e53935; } .tagB { background: #1e63d6; }
+  .diff { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .dbtn { padding: 14px 24px; border-radius: 999px; font-size: clamp(16px, 4.5vw, 20px); font-weight: 900; color: #fff;
+    box-shadow: 0 6px 0 rgba(0,0,0,.35), 0 10px 20px rgba(0,0,0,.25); transition: transform .08s; }
+  .dbtn:active { transform: translateY(4px); }
+  .d1 { background: linear-gradient(#5be38a, #22a356); } .d2 { background: linear-gradient(#ffc23f, #ff7a1a); } .d3 { background: linear-gradient(#ff5a5a, #c41c1c); }
+  .smallbtn { padding: 10px 22px; border-radius: 999px; font-size: 15px; font-weight: 800; color: #fff; text-decoration: none; display: inline-block;
+    background: rgba(10,15,30,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); }
+  .by { font-weight: 900; font-size: 15px; padding: 6px 14px; border-radius: 999px; text-decoration: none; color: #fff; pointer-events: auto;
+    background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5); box-shadow: 0 4px 14px rgba(214,41,118,.4); }
+  .ctrl { padding: 8px 14px; border-radius: 14px; font-weight: 700; font-size: 13px; line-height: 1.6; max-width: min(620px, 92vw); }
+  .ctrl b { background: rgba(255,255,255,.18); padding: 1px 6px; border-radius: 5px; }
+  .bigbtn { padding: 15px 44px; border-radius: 999px; font-size: clamp(20px, 5.5vw, 28px); font-weight: 900; color: #fff;
+    background: linear-gradient(#ff6a5a, #d32f2f); box-shadow: 0 7px 0 #8e1b1b, 0 12px 24px rgba(0,0,0,.25); }
+  .bigbtn:active { transform: translateY(5px); box-shadow: 0 2px 0 #8e1b1b; }
+  .card { background: rgba(255,255,255,.12); border-radius: 24px; padding: 18px 28px; min-width: min(320px, 86vw);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.3); display: flex; flex-direction: column; gap: 6px; align-items: center; font-weight: 800; }
+  .h2 { font-size: clamp(30px, 8vw, 52px); font-weight: 900; text-shadow: 0 4px 0 rgba(0,0,0,.35); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .best { color: #ffe27a; font-weight: 900; }
+  #err { position: absolute; inset: 0; display: grid; place-items: center; padding: 30px; text-align: center; background: #141a2a; font-weight: 800; font-size: 18px; pointer-events: auto; }
+  @media (max-height: 520px) {
+    .screen { gap: 8px; padding: 12px 20px; }
+    .title { font-size: 40px; } .title small { font-size: 13px; margin-top: 4px; }
+    .sub { font-size: 13px; } .dbtn { padding: 10px 20px; font-size: 16px; } .ctrl { font-size: 12px; padding: 6px 12px; }
+    .h2 { font-size: 30px; } .bigbtn { padding: 10px 34px; font-size: 20px; } .card { padding: 10px 20px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="ui">
+  <div id="hud" class="hidden">
+    <div class="bars">
+      <div class="side aka">
+        <div class="name"><span>AKA</span>SHAFA</div>
+        <div class="bar"><b id="lagA"></b><i id="hpA"></i></div>
+        <div class="pts"><span>Poin <b id="ptA">0</b></span><span class="rw" id="rwA"><i></i><i></i></span></div>
+      </div>
+      <div class="mid">
+        <div id="timer" class="glass">60</div>
+        <div id="round">RONDE 1</div>
+        <div id="topbtns">
+          <button id="btnMute" class="iconbtn glass" aria-label="Suara"></button>
+          <button id="btnPause" class="iconbtn glass" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg></button>
+        </div>
+      </div>
+      <div class="side ao">
+        <div class="name">KOMPUTER<span>AO</span></div>
+        <div class="bar"><b id="lagB"></b><i id="hpB"></i></div>
+        <div class="pts"><span class="rw" id="rwB"><i></i><i></i></span><span>Poin <b id="ptB">0</b></span></div>
+      </div>
+    </div>
+  </div>
+  <div id="flash"></div>
+  <div id="callout"></div>
+  <div id="rotate" class="glass hidden">📱↻ Miringkan HP biar lebih nyaman</div>
+  <div id="controls" class="hidden">
+    <div class="pad" id="padL">
+      <button class="cbtn" id="bL" aria-label="Kiri"><em>◀</em></button>
+      <button class="cbtn" id="bR" aria-label="Kanan"><em>▶</em></button>
+    </div>
+    <div class="pad" id="padR">
+      <button class="cbtn" id="bH"><span><em>🦵</em>TINGGI</span></button>
+      <button class="cbtn" id="bB"><span><em>🛡️</em>TANGKIS</span></button>
+      <button class="cbtn" id="bK"><span><em>🦶</em>TENDANG</span></button>
+      <button class="cbtn" id="bP"><span><em>👊</em>PUKUL</span></button>
+    </div>
+  </div>
+  <div id="credit" class="hidden">by @shafaauray</div>
+
+  <div id="menu" class="screen dim">
+    <div class="title">SHAFA<br><span>KARATE</span><small>KUMITE 3D</small></div>
+    <div class="vs"><span class="tagA">🔴 SHAFA (AKA)</span> VS <span class="tagB">🔵 KOMPUTER (AO)</span></div>
+    <div class="sub">Pukul, tendang &amp; tangkis! Habisi nyawa lawan atau unggul saat waktu habis. Menang 2 ronde = juara! 🥋</div>
+    <div class="diff">
+      <button class="dbtn d1" data-d="0">🥋 MUDAH</button>
+      <button class="dbtn d2" data-d="1">🔥 SEDANG</button>
+      <button class="dbtn d3" data-d="2">💀 SULIT</button>
+    </div>
+    <div id="menuBest" class="best"></div>
+    <div id="ctrlHint" class="ctrl glass"></div>
+    <div class="row"><a class="smallbtn" href="index.html">← Game lain</a></div>
+    <a class="by" href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener">by @shafaauray</a>
+  </div>
+
+  <div id="pause" class="screen dim hidden">
+    <div class="h2">PAUSE</div>
+    <button id="btnResume" class="bigbtn">▶ LANJUT</button>
+    <button id="btnPauseMenu" class="smallbtn">Menu</button>
+  </div>
+
+  <div id="over" class="screen dim hidden">
+    <div class="h2" id="overTitle">MENANG!</div>
+    <div class="card">
+      <div id="overSub"></div>
+      <div id="overStats" style="opacity:.9"></div>
+    </div>
+    <button id="btnAgain" class="bigbtn">↻ TANDING LAGI</button>
+    <div class="row"><button id="btnMenu" class="smallbtn">Menu</button><a class="smallbtn" href="index.html">← Game lain</a></div>
+    <a class="by" href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener">by @shafaauray</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+// =====================================================================
+//  SHAFA KARATE 3D — WKF-style kumite · by @shafaauray
+//  Single file, pure WebGL, procedural animation
+// =====================================================================
+const $ = id => document.getElementById(id);
+const canvas = $('gl');
+const DPR0 = Math.min(window.devicePixelRatio || 1, 2);
+const gl = canvas.getContext('webgl', { antialias: DPR0 < 1.5, alpha: false, powerPreference: 'high-performance' }) || canvas.getContext('experimental-webgl');
+if (!gl) { $('ui').innerHTML = '<div id="err">Browser kamu belum mendukung WebGL 😢<br>Coba pakai Chrome atau Safari terbaru.</div>'; throw new Error('No WebGL'); }
+canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); setTimeout(() => location.reload(), 300); });
+
+// ---------- Utils ----------
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+const ease = t => t * t * (3 - 2 * t);
+function hx(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
+const shade = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let R = Math.random;
+const rr = (a, b) => a + (b - a) * R();
+const pick = arr => arr[Math.floor(R() * arr.length)];
+const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+// ---------- Matrices ----------
+const mat = () => new Float32Array(16);
+const cp = (d, s) => { d.set(s); return d; };
+function ident(m) { m.fill(0); m[0] = m[5] = m[10] = m[15] = 1; return m; }
+const _mt = mat();
+function mul(out, a, b) { const o = _mt; for (let c = 0; c < 4; c++) { const b0 = b[c * 4], b1 = b[c * 4 + 1], b2 = b[c * 4 + 2], b3 = b[c * 4 + 3];
+  o[c * 4] = a[0] * b0 + a[4] * b1 + a[8] * b2 + a[12] * b3; o[c * 4 + 1] = a[1] * b0 + a[5] * b1 + a[9] * b2 + a[13] * b3;
+  o[c * 4 + 2] = a[2] * b0 + a[6] * b1 + a[10] * b2 + a[14] * b3; o[c * 4 + 3] = a[3] * b0 + a[7] * b1 + a[11] * b2 + a[15] * b3; } out.set(o); return out; }
+function translate(m, x, y, z) { m[12] += m[0] * x + m[4] * y + m[8] * z; m[13] += m[1] * x + m[5] * y + m[9] * z; m[14] += m[2] * x + m[6] * y + m[10] * z; m[15] += m[3] * x + m[7] * y + m[11] * z; return m; }
+function rotX(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const y = m[4 + i], z = m[8 + i]; m[4 + i] = y * c + z * s; m[8 + i] = z * c - y * s; } return m; }
+function rotY(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const x = m[i], z = m[8 + i]; m[i] = x * c - z * s; m[8 + i] = x * s + z * c; } return m; }
+function rotZ(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const x = m[i], y = m[4 + i]; m[i] = x * c + y * s; m[4 + i] = y * c - x * s; } return m; }
+function scale(m, x, y, z) { for (let i = 0; i < 4; i++) { m[i] *= x; m[4 + i] *= y; m[8 + i] *= z; } return m; }
+function perspective(m, fovy, asp, n, f) { const t = 1 / Math.tan(fovy / 2); m.fill(0); m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f); return m; }
+function lookAt(m, e, t) {
+  let zx = e[0] - t[0], zy = e[1] - t[1], zz = e[2] - t[2]; let l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+  let xx = zz, xz = -zx; l = Math.hypot(xx, xz) || 1; xx /= l; xz /= l; const xy = 0;
+  const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  m[0] = xx; m[1] = yx; m[2] = zx; m[3] = 0; m[4] = xy; m[5] = yy; m[6] = zy; m[7] = 0; m[8] = xz; m[9] = yz; m[10] = zz; m[11] = 0;
+  m[12] = -(xx * e[0] + xy * e[1] + xz * e[2]); m[13] = -(yx * e[0] + yy * e[1] + yz * e[2]); m[14] = -(zx * e[0] + zy * e[1] + zz * e[2]); m[15] = 1; return m;
+}
+function T(x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, rx = 0, rz = 0) { const m = ident(mat()); translate(m, x, y, z); rotY(m, ry); rotX(m, rx); rotZ(m, rz); return scale(m, sx, sy, sz); }
+
+// ---------- Geometry ----------
+const BOX_FACES = [
+  [[1, 0, 0], [[.5, -.5, .5], [.5, -.5, -.5], [.5, .5, -.5], [.5, .5, .5]]], [[-1, 0, 0], [[-.5, -.5, -.5], [-.5, -.5, .5], [-.5, .5, .5], [-.5, .5, -.5]]],
+  [[0, 1, 0], [[-.5, .5, .5], [.5, .5, .5], [.5, .5, -.5], [-.5, .5, -.5]]], [[0, -1, 0], [[-.5, -.5, -.5], [.5, -.5, -.5], [.5, -.5, .5], [-.5, -.5, .5]]],
+  [[0, 0, 1], [[-.5, -.5, .5], [.5, -.5, .5], [.5, .5, .5], [-.5, .5, .5]]], [[0, 0, -1], [[.5, -.5, -.5], [-.5, -.5, -.5], [-.5, .5, -.5], [.5, .5, -.5]]],
+];
+class Geo {
+  constructor() { this.a = []; }
+  v(m, p, n, c, e) { const a = this.a, x = p[0], y = p[1], z = p[2];
+    a.push(m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m[5] * y + m[9] * z + m[13], m[2] * x + m[6] * y + m[10] * z + m[14]);
+    const tx = m[0] * n[0] + m[4] * n[1] + m[8] * n[2], ty = m[1] * n[0] + m[5] * n[1] + m[9] * n[2], tz = m[2] * n[0] + m[6] * n[1] + m[10] * n[2];
+    const l = Math.hypot(tx, ty, tz) || 1; a.push(tx / l, ty / l, tz / l, c[0], c[1], c[2], e); }
+  box(m, c, e = 0) { for (const [n, q] of BOX_FACES) { this.v(m, q[0], n, c, e); this.v(m, q[1], n, c, e); this.v(m, q[2], n, c, e); this.v(m, q[0], n, c, e); this.v(m, q[2], n, c, e); this.v(m, q[3], n, c, e); } }
+  cyl(m, c, e = 0, seg = 10) { for (let i = 0; i < seg; i++) { const a0 = i / seg * Math.PI * 2, a1 = (i + 1) / seg * Math.PI * 2;
+    const c0 = Math.cos(a0) * .5, s0 = Math.sin(a0) * .5, c1 = Math.cos(a1) * .5, s1 = Math.sin(a1) * .5, n0 = [c0, 0, s0], n1 = [c1, 0, s1];
+    this.v(m, [c0, -.5, s0], n0, c, e); this.v(m, [c1, -.5, s1], n1, c, e); this.v(m, [c1, .5, s1], n1, c, e);
+    this.v(m, [c0, -.5, s0], n0, c, e); this.v(m, [c1, .5, s1], n1, c, e); this.v(m, [c0, .5, s0], n0, c, e);
+    this.v(m, [0, .5, 0], [0, 1, 0], c, e); this.v(m, [c0, .5, s0], [0, 1, 0], c, e); this.v(m, [c1, .5, s1], [0, 1, 0], c, e);
+    this.v(m, [0, -.5, 0], [0, -1, 0], c, e); this.v(m, [c1, -.5, s1], [0, -1, 0], c, e); this.v(m, [c0, -.5, s0], [0, -1, 0], c, e); } }
+  sphere(m, c, e = 0, seg = 10) { const rows = Math.max(4, seg >> 1);
+    const P = (i, j) => { const th = i / rows * Math.PI, ph = j / seg * Math.PI * 2; return [Math.sin(th) * Math.cos(ph) * .5, Math.cos(th) * .5, Math.sin(th) * Math.sin(ph) * .5]; };
+    const N = p => [p[0] * 2, p[1] * 2, p[2] * 2];
+    for (let i = 0; i < rows; i++) for (let j = 0; j < seg; j++) { const a = P(i, j), b = P(i + 1, j), d = P(i + 1, j + 1), f = P(i, j + 1);
+      this.v(m, a, N(a), c, e); this.v(m, b, N(b), c, e); this.v(m, d, N(d), c, e); this.v(m, a, N(a), c, e); this.v(m, d, N(d), c, e); this.v(m, f, N(f), c, e); } }
+  // rounded box = box + spheres-ish edges (cheap: box with slightly smaller sphere caps)
+  capsuleY(m, c, e = 0) { this.cyl(T(0, 0, 0, 1, 0.7, 1), c, e, 10); }
+  build() { const d = new Float32Array(this.a), b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, d, gl.STATIC_DRAW); return { buf: b, count: d.length / 10 }; }
+}
+function G(fn) { const g = new Geo(); fn(g); return g.build(); }
+// helper to apply a parent matrix to T()
+function PT(parent, ...a) { return mul(mat(), parent, T(...a)); }
+
+// ---------- Shaders ----------
+const VS = `attribute vec3 aPos; attribute vec3 aNor; attribute vec4 aCol;
+uniform mat4 uVP; uniform mat4 uM; varying vec3 vN; varying vec4 vC; varying vec3 vW;
+void main(){ vec4 w = uM * vec4(aPos, 1.0); vW = w.xyz; vN = mat3(uM[0].xyz, uM[1].xyz, uM[2].xyz) * aNor; vC = aCol; gl_Position = uVP * w; }`;
+const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec3 vN; varying vec4 vC; varying vec3 vW;
+uniform vec3 uCam, uSun, uSunC, uSkyC, uGndC, uFogC; uniform float uFog, uAlpha, uEmis; uniform vec4 uTint;
+void main(){
+  vec3 n = normalize(vN); vec3 base = vC.rgb;
+  vec3 light = mix(uGndC, uSkyC, n.y * 0.5 + 0.5) + uSunC * max(dot(n, uSun), 0.0);
+  vec3 col = base * light;
+  float spot = exp(-dot(vW.xz, vW.xz) * 0.012);
+  col *= mix(0.5, 1.12, spot);
+  vec3 dv = (uCam - vW) * 0.01; float d = length(dv) * 100.0; vec3 v = dv / max(length(dv), 1e-4);
+  col += pow(1.0 - max(dot(n, v), 0.0), 3.0) * 0.12;
+  float e = clamp(vC.a + uEmis, 0.0, 1.0); col = mix(col, base * 1.2, e);
+  col = mix(col, uTint.rgb, uTint.a);
+  float fd = d * uFog; col = mix(col, uFogC, clamp(1.0 - exp(-fd * fd), 0.0, 1.0));
+  gl_FragColor = vec4(col, uAlpha);
+}`;
+const BG_VS = `attribute vec2 aPos; varying vec2 vP; void main(){ vP = aPos; gl_Position = vec4(aPos, 0.999, 1.0); }`;
+const BG_FS = `precision mediump float; varying vec2 vP; uniform float uTime, uAsp;
+void main(){ float y = vP.y * 0.5 + 0.5; vec3 c = mix(vec3(0.05,0.06,0.1), vec3(0.12,0.14,0.22), y);
+  for (int i = 0; i < 4; i++) { float fi = float(i); vec2 p = vec2((fi - 1.5) * 0.55 * uAsp, 1.05); float d = length(vec2((vP.x * uAsp - p.x) * 0.9, vP.y - p.y));
+    c += vec3(1.0, 0.95, 0.85) * exp(-d * 6.0) * 0.35; }
+  gl_FragColor = vec4(c, 1.0); }`;
+const TX_VS = `attribute vec3 aPos; attribute vec2 aUV; uniform mat4 uVP, uM; varying vec2 vUV; varying vec3 vW;
+void main(){ vec4 w = uM * vec4(aPos, 1.0); vW = w.xyz; vUV = aUV; gl_Position = uVP * w; }`;
+const TX_FS = `precision mediump float; varying vec2 vUV; varying vec3 vW; uniform sampler2D uTex; uniform vec3 uCam, uFogC; uniform float uFog, uBright;
+void main(){ vec4 t = texture2D(uTex, vUV); if (t.a < 0.1) discard; float d = length((uCam - vW) * 0.01) * 100.0 * uFog;
+  gl_FragColor = vec4(mix(t.rgb * uBright, uFogC, clamp(1.0 - exp(-d * d), 0.0, 1.0)), 1.0); }`;
+function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+function program(vs, fs, attrs) { const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  attrs.forEach((a, i) => gl.bindAttribLocation(p, i, a)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const U = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); U[info.name] = gl.getUniformLocation(p, info.name); } return { p, U }; }
+const MAIN = program(VS, FS, ['aPos', 'aNor', 'aCol']), U = MAIN.U;
+const BG = program(BG_VS, BG_FS, ['aPos']);
+const TX = program(TX_VS, TX_FS, ['aPos', 'aUV']);
+const bgBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bgBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+const quadBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-.5, -.5, 0, 0, 1, .5, -.5, 0, 1, 1, .5, .5, 0, 1, 0, -.5, -.5, 0, 0, 1, .5, .5, 0, 1, 0, -.5, .5, 0, 0, 0]), gl.STATIC_DRAW);
+
+// ---------- Colors ----------
+const C = {
+  gi: hx('#f6f5f0'), giShade: hx('#dcdad2'), skin: hx('#d9a27a'), skin2: hx('#c58d64'), hair: hx('#1d1a1a'),
+  red: hx('#e53935'), blue: hx('#1e5fd6'), navy: hx('#1d2a4a'), grey: hx('#a9adb5'), shirt: hx('#f2f2f2'), tie: hx('#7a1c2a'), black: hx('#16181d'),
+  matBlue: hx('#2468d8'), matBlue2: hx('#1d55b4'), matRed: hx('#d52a2a'), seam: hx('#0e1f3d'), wood: hx('#8a6a48'),
+};
+const TATAMI_TOP = 0.04;
+
+// ---------- Arena ----------
+function makeTex(w, h, draw) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); draw(x, w, h);
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+  gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t;
+}
+const FONT = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+const TEX_MAIN = makeTex(2048, 256, (x, w, h) => {
+  const g = x.createLinearGradient(0, 0, w, 0); g.addColorStop(0, '#b71c1c'); g.addColorStop(0.5, '#141a2a'); g.addColorStop(1, '#0d47a1');
+  x.fillStyle = g; x.fillRect(0, 0, w, h); x.fillStyle = '#ffd23f'; x.fillRect(0, h - 14, w, 14); x.fillRect(0, 0, w, 6);
+  x.font = `900 120px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#fff'; x.fillText('SHAFA KARATE CHAMPIONSHIP', w / 2, h / 2 + 4);
+});
+const TEX_NAME = makeTex(1024, 256, (x, w, h) => {
+  const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#feda75'); g.addColorStop(0.3, '#fa7e1e'); g.addColorStop(0.6, '#d62976'); g.addColorStop(1, '#4f5bd5');
+  x.fillStyle = g; x.fillRect(0, 0, w, h); x.font = `900 120px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillStyle = '#fff'; x.fillText('@shafaauray', w / 2, h / 2 + 4);
+});
+const TEX_KUMITE = makeTex(1024, 256, (x, w, h) => {
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, w, h); x.font = `900 100px ${FONT}`; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillStyle = '#d32f2f'; x.fillText('AKA', w * 0.24, h / 2 + 4); x.fillStyle = '#111'; x.fillText('VS', w * 0.5, h / 2 + 4); x.fillStyle = '#1e5fd6'; x.fillText('AO', w * 0.76, h / 2 + 4);
+});
+function buildArena() {
+  const g = new Geo(); R = mulberry(7);
+  // hall floor
+  g.box(T(0, -0.05, 0, 60, 0.1, 60), C.wood);
+  for (let i = -30; i < 30; i += 1.2) g.box(T(i, 0.001, 0, 0.02, 0.002, 60), shade(C.wood, 0.85));
+  // tatami: 12x12 of 1x1 mats (8x8 competition area incl. 1m red border + 2m safety area)
+  g.box(T(0, 0.015, 0, 12.02, 0.03, 12.02), C.seam);
+  for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++) {
+    const cx = -5.5 + i, cz = -5.5 + j, m = Math.max(Math.abs(cx), Math.abs(cz));
+    const col = m > 4 ? C.matBlue2 : m > 3 ? C.matRed : C.matBlue;
+    g.box(T(cx, 0.02, cz, 0.985, 0.04, 0.985), shade(col, 0.97 + R() * 0.06));
+  }
+  // starting positions: two inverted mats (red side up) 1 m from the centre
+  for (const s of [-1, 1]) g.box(T(s * 1.5, 0.021, 0, 0.985, 0.04, 0.985), C.matRed);
+  // tatami edge
+  g.box(T(0, 0.01, 6.06, 12.2, 0.02, 0.1), shade(C.seam, 1.5)); g.box(T(0, 0.01, -6.06, 12.2, 0.02, 0.1), shade(C.seam, 1.5));
+  // judges' chairs + official table
+  g.box(T(0, 0.38, 7.6, 4, 0.06, 0.8), hx('#e8e8e8')); for (const s of [-1.8, 1.8]) for (const z of [7.3, 7.9]) g.box(T(s, 0.18, z, 0.06, 0.36, 0.06), C.black);
+  // stands behind
+  for (let r = 0; r < 7; r++) {
+    const z = -9.5 - r * 0.9, y = 0.35 + r * 0.45;
+    g.box(T(0, y / 2, z, 40, y, 0.9), shade(hx('#2b3550'), 0.9 + r * 0.03));
+    for (let k = -19; k < 19; k += 0.75) {
+      if (R() < 0.18) continue;
+      const shirt = hx(pick(['#e53935', '#1e5fd6', '#ffffff', '#ffd23f', '#43a047', '#8e24aa', '#ff7043', '#90a4ae', '#212121'])), sk = hx(pick(['#d9a27a', '#c58d64', '#a8714a', '#f0c9a0']));
+      const px = k + rr(-0.15, 0.15);
+      g.box(T(px, y + 0.35, z + 0.1, 0.38, 0.55, 0.3), shirt);
+      g.box(T(px, y + 0.78, z + 0.1, 0.24, 0.27, 0.24), sk);
+      g.box(T(px, y + 0.93, z + 0.08, 0.26, 0.08, 0.26), hx(pick(['#1d1a1a', '#3b2a20', '#111111', '#5a3a22'])));
+    }
+  }
+  // back wall
+  g.box(T(0, 6, -16.5, 60, 12, 0.4), hx('#1b2236'));
+  // side walls
+  for (const s of [-1, 1]) g.box(T(s * 22, 5, -4, 0.4, 10, 30), hx('#1b2236'));
+  // banners frames
+  g.box(T(0, 7.6, -16.25, 16.4, 2.2, 0.1), hx('#0a0d16'));
+  for (const s of [-1, 1]) g.box(T(s * 12.5, 7.6, -16.25, 6.4, 1.8, 0.1), hx('#0a0d16'));
+  // ceiling lights
+  for (const s of [-6, -2, 2, 6]) g.box(T(s, 9.5, -2, 1.6, 0.15, 1.6), hx('#fff6dd'), 1);
+  R = Math.random;
+  return g.build();
+}
+const ARENA = buildArena();
+
+// ---------- Character parts ----------
+// Model faces +x, up +y. Lead side = -z, rear side = +z.
+function buildKarateka(col, hairStyle) {
+  const gi = C.gi, gs = C.giShade, skin = C.skin;
+  const pelvis = G(g => {
+    g.box(T(0, -0.04, 0, 0.27, 0.2, 0.36), gi);
+    g.box(T(0, -0.1, 0, 0.3, 0.2, 0.39), gi);                                 // jacket skirt
+    g.box(T(0.0, 0.07, 0, 0.29, 0.06, 0.4), col, 0.05);                       // belt (≈5cm)
+    g.box(T(0.15, 0.07, -0.04, 0.04, 0.08, 0.1), col, 0.05);                  // knot
+    g.box(T(0.16, -0.06, -0.09, 0.02, 0.2, 0.05, 0, 0.15), col, 0.05);         // tails
+    g.box(T(0.16, -0.06, 0.0, 0.02, 0.2, 0.05, 0, -0.15), col, 0.05);
+  });
+  const torso = G(g => {
+    g.box(T(0, 0.2, 0, 0.27, 0.3, 0.38), gi);
+    g.box(T(0, 0.4, 0, 0.29, 0.18, 0.44), gi);
+    g.sphere(T(0, 0.45, -0.2, 0.16, 0.14, 0.16), gi, 0, 8); g.sphere(T(0, 0.45, 0.2, 0.16, 0.14, 0.16), gi, 0, 8);
+    for (const s of [-1, 1]) g.box(T(0.142, 0.3, s * 0.065, 0.012, 0.38, 0.035, 0, s * 0.38), gs);   // lapels
+    g.box(T(0.141, 0.08, 0.0, 0.01, 0.16, 0.05), gs);
+    g.box(T(-0.02, 0.5, 0, 0.2, 0.05, 0.22), gs);                                                    // collar
+    g.box(T(0.0, 0.47, 0.235, 0.09, 0.05, 0.02), col, 0.2); g.box(T(0.0, 0.47, -0.235, 0.09, 0.05, 0.02), col, 0.2); // shoulder embroidery
+    g.cyl(T(0, 0.53, 0, 0.11, 0.08, 0.11), skin, 0, 8);
+  });
+  const head = G(g => {
+    g.sphere(T(0, 0.14, 0, 0.21, 0.25, 0.2), skin, 0, 14);
+    g.sphere(T(-0.02, 0.19, 0, 0.225, 0.2, 0.215), C.hair, 0, 14);
+    g.sphere(T(-0.035, 0.12, 0, 0.2, 0.2, 0.21), C.hair, 0, 12);
+    if (hairStyle === 'bun') g.sphere(T(-0.1, 0.27, 0, 0.11, 0.11, 0.11), C.hair, 0, 10);
+    else g.box(T(0.055, 0.25, 0, 0.08, 0.04, 0.18, 0, 0, -0.3), C.hair);
+    for (const s of [-1, 1]) { g.box(T(0.103, 0.155, s * 0.045, 0.012, 0.022, 0.03), hx('#1a1210')); g.box(T(0.1, 0.19, s * 0.047, 0.012, 0.012, 0.045), C.hair);
+      g.sphere(T(0, 0.14, s * 0.1, 0.04, 0.06, 0.03), C.skin2, 0, 6); }
+    g.box(T(0.105, 0.12, 0, 0.03, 0.04, 0.025), C.skin2);
+    g.box(T(0.1, 0.075, 0, 0.012, 0.012, 0.05), hx('#7a3a30'));
+  });
+  const upper = G(g => { g.box(T(0, -0.14, 0, 0.115, 0.3, 0.115), gi); });
+  const fore = G(g => {
+    g.box(T(0, -0.06, 0, 0.105, 0.14, 0.105), gi);
+    g.box(T(0, -0.17, 0, 0.075, 0.1, 0.075), skin);
+    g.box(T(0.0, -0.27, 0, 0.11, 0.12, 0.1), col, 0.08);      // mitt
+    g.box(T(0.0, -0.22, 0, 0.115, 0.025, 0.105), hx('#ffffff'));
+    g.box(T(0.045, -0.25, 0.04, 0.04, 0.06, 0.035), col, 0.08);
+  });
+  const thigh = G(g => { g.box(T(0, -0.22, 0, 0.16, 0.48, 0.16), gi); });
+  const shin = G(g => {
+    g.box(T(0, -0.13, 0, 0.14, 0.28, 0.14), gi);
+    g.box(T(0.015, -0.32, 0, 0.11, 0.14, 0.11), col, 0.05);  // shin pad
+    g.box(T(0.075, -0.425, 0, 0.23, 0.065, 0.11), col, 0.05); // instep / foot protector
+    g.box(T(-0.025, -0.425, 0, 0.07, 0.065, 0.085), skin);
+  });
+  return { pelvis, torso, head, upper, fore, thigh, shin };
+}
+function buildReferee() {
+  const pelvis = G(g => { g.box(T(0, -0.04, 0, 0.26, 0.2, 0.36), C.grey); g.box(T(0, 0.06, 0, 0.27, 0.04, 0.37), C.black); });
+  const torso = G(g => {
+    g.box(T(0, 0.24, 0, 0.26, 0.42, 0.4), C.navy);
+    g.sphere(T(0, 0.43, -0.19, 0.15, 0.12, 0.15), C.navy, 0, 8); g.sphere(T(0, 0.43, 0.19, 0.15, 0.12, 0.15), C.navy, 0, 8);
+    g.box(T(0.131, 0.36, 0, 0.01, 0.24, 0.1), C.shirt); g.box(T(0.135, 0.33, 0, 0.012, 0.22, 0.035), C.tie);
+    g.box(T(0.0, 0.47, 0.0, 0.16, 0.05, 0.2), C.shirt);
+    g.box(T(0.132, 0.08, 0.06, 0.01, 0.02, 0.02), hx('#c9a227'), 0.3);
+    g.cyl(T(0, 0.53, 0, 0.1, 0.08, 0.1), C.skin, 0, 8);
+  });
+  const head = G(g => { g.sphere(T(0, 0.14, 0, 0.2, 0.24, 0.19), C.skin2, 0, 14); g.sphere(T(-0.03, 0.19, 0, 0.21, 0.17, 0.2), hx('#6b6b6b'), 0, 12);
+    for (const s of [-1, 1]) g.box(T(0.098, 0.15, s * 0.045, 0.012, 0.02, 0.03), hx('#1a1210')); g.box(T(0.1, 0.12, 0, 0.03, 0.04, 0.025), C.skin); });
+  const upper = G(g => { g.box(T(0, -0.14, 0, 0.11, 0.3, 0.11), C.navy); });
+  const fore = G(g => { g.box(T(0, -0.1, 0, 0.1, 0.22, 0.1), C.navy); g.box(T(0, -0.215, 0, 0.09, 0.03, 0.09), C.shirt); g.box(T(0, -0.27, 0, 0.07, 0.09, 0.06), C.skin2); });
+  const thigh = G(g => { g.box(T(0, -0.22, 0, 0.15, 0.48, 0.15), C.grey); });
+  const shin = G(g => { g.box(T(0, -0.18, 0, 0.13, 0.38, 0.13), C.grey); g.box(T(0.06, -0.415, 0, 0.26, 0.08, 0.12), C.black); });
+  return { pelvis, torso, head, upper, fore, thigh, shin };
+}
+function buildJudgeBody() { // seated judge (static), local faces +x
+  return G(g => {
+    g.box(T(0, 0.45, 0, 0.46, 0.05, 0.46), hx('#3a3f4b')); for (const a of [-1, 1]) for (const b of [-1, 1]) g.box(T(a * 0.2, 0.22, b * 0.2, 0.04, 0.45, 0.04), C.black);
+    g.box(T(-0.22, 0.75, 0, 0.04, 0.6, 0.46), hx('#3a3f4b'));
+    g.box(T(0.1, 0.53, -0.1, 0.44, 0.13, 0.14), C.grey); g.box(T(0.1, 0.53, 0.1, 0.44, 0.13, 0.14), C.grey);
+    g.box(T(0.32, 0.26, -0.1, 0.12, 0.46, 0.12), C.grey); g.box(T(0.32, 0.26, 0.1, 0.12, 0.46, 0.12), C.grey);
+    g.box(T(0.37, 0.04, -0.1, 0.24, 0.08, 0.11), C.black); g.box(T(0.37, 0.04, 0.1, 0.24, 0.08, 0.11), C.black);
+    g.box(T(-0.02, 0.85, 0, 0.26, 0.5, 0.4), C.navy);
+    g.box(T(0.111, 0.95, 0, 0.01, 0.24, 0.1), C.shirt); g.box(T(0.115, 0.92, 0, 0.012, 0.2, 0.035), C.tie);
+    g.sphere(T(0, 1.24, 0, 0.2, 0.24, 0.19), C.skin2, 0, 12); g.sphere(T(-0.03, 1.29, 0, 0.21, 0.17, 0.2), hx('#3a3a3a'), 0, 10);
+    for (const s of [-1, 1]) g.box(T(0.098, 1.25, s * 0.045, 0.012, 0.02, 0.03), hx('#1a1210'));
+  });
+}
+const flagMesh = col => G(g => { g.cyl(T(0, 0.22, 0, 0.025, 0.44, 0.025), hx('#d8d8d8'), 0, 6); g.box(T(0.0, 0.36, 0.13, 0.01, 0.2, 0.24), col, 0.15); g.box(T(0, 0, 0, 0.08, 0.08, 0.08), C.skin2); });
+const MESH = {
+  aka: buildKarateka(C.red, 'bun'), ao: buildKarateka(C.blue, 'short'), ref: buildReferee(), judge: buildJudgeBody(),
+  flagR: flagMesh(C.red), flagB: flagMesh(C.blue),
+  disc: G(g => g.cyl(T(0, 0, 0, 1, 0.01, 1), [0, 0, 0], 0, 20)),
+  cube: G(g => g.box(T(0, 0, 0), [1, 1, 1], 0)),
+  star: G(g => g.sphere(T(0, 0, 0), [1, 1, 1], 1, 8)),
+};
+
+// ---------- Poses ----------
+// L = lead (front) limbs, R = rear limbs.  sh*: shoulder raise forward, ax*: arm sideways (toward centre +), el*: elbow,
+// hip*: leg raise forward, ab*: leg sideways, kn*: knee, yaw: torso twist, lean: forward lean, head: nod, drop: hip height, lunge: forward shift, fall: tip over backwards
+const KEYS = ['y', 'drop', 'lunge', 'yaw', 'lean', 'head', 'shL', 'axL', 'elL', 'shR', 'axR', 'elR', 'hipL', 'abL', 'knL', 'hipR', 'abR', 'knR', 'fall', 'twL', 'twR'];
+const BASE = { y: 0, drop: -0.07, lunge: 0, yaw: -0.55, lean: 0.06, head: -0.05, shL: 1.05, axL: 0.15, elL: 1.2, shR: 0.6, axR: 0.25, elR: 2.0,
+  hipL: 0.32, abL: 0, knL: 0.32, hipR: -0.32, abR: 0, knR: 0.28, fall: 0, twL: 0, twR: 0 };
+const P = o => Object.assign({}, BASE, o);
+const POSE = {
+  kamae: P({}),
+  stand: P({ drop: 0, yaw: 0, lean: 0, head: 0, shL: 0.05, axL: -0.08, elL: 0.08, shR: 0.05, axR: -0.08, elR: 0.08, hipL: 0.04, knL: 0, hipR: -0.04, knR: 0 }),
+  bow: P({ drop: 0, yaw: 0, lean: 0.55, head: 0.25, shL: 0.12, axL: -0.08, elL: 0.05, shR: 0.12, axR: -0.08, elR: 0.05, hipL: 0.04, knL: 0, hipR: -0.04, knR: 0 }),
+  punch: P({ drop: -0.13, lunge: 0.34, yaw: 0.3, lean: 0.18, shL: 0.45, axL: 0.1, elL: 1.9, shR: 1.56, axR: 0.32, elR: 0.04, hipL: 0.62, knL: 0.55, hipR: -0.52, knR: 0.06, twR: 1.2 }),
+  kickCh: P({ drop: -0.02, lunge: 0.05, yaw: 0.25, lean: -0.2, shL: 0.9, elL: 1.5, shR: 0.4, elR: 1.9, hipL: 0.05, knL: 0.15, hipR: 1.25, abR: -0.35, knR: 1.95 }),
+  kick: P({ drop: -0.02, lunge: 0.18, yaw: 0.55, lean: -0.32, shL: 0.95, elL: 1.4, shR: 0.1, axR: -0.2, elR: 1.6, hipL: -0.05, knL: 0.08, hipR: 1.52, abR: -0.3, knR: 0.12 }),
+  hkickCh: P({ drop: -0.02, lunge: 0.05, yaw: 0.3, lean: -0.35, shL: 1.0, elL: 1.4, shR: 0.4, elR: 1.9, hipL: -0.05, knL: 0.1, hipR: 1.75, abR: -0.4, knR: 2.0 }),
+  hkick: P({ drop: -0.02, lunge: 0.15, yaw: 0.6, lean: -0.58, shL: 1.2, elL: 1.0, shR: -0.2, axR: -0.3, elR: 1.0, hipL: -0.12, knL: 0.04, hipR: 2.15, abR: -0.35, knR: 0.08 }),
+  block: P({ drop: -0.13, yaw: -0.25, lean: 0.03, head: 0.15, shL: 1.3, axL: 0.45, elL: 1.75, shR: 1.15, axR: 0.55, elR: 1.95, hipL: 0.36, knL: 0.42, hipR: -0.36, knR: 0.38 }),
+  hit: P({ lunge: -0.2, yaw: -0.9, lean: -0.35, head: -0.55, shL: 0.5, elL: 1.3, shR: 0.3, elR: 1.7, hipL: 0.15, knL: 0.2, hipR: -0.5, knR: 0.4 }),
+  ko: P({ drop: 0, lunge: -0.4, yaw: -0.2, lean: -0.15, head: -0.3, shL: 2.4, axL: -0.6, elL: 0.3, shR: 2.6, axR: -0.6, elR: 0.3, hipL: 0.5, knL: 0.6, hipR: 0.2, knR: 0.2, fall: 1.52 }),
+  win: P({ drop: 0, yaw: 0, lean: 0, head: 0.05, shL: 0.2, axL: -0.1, elL: 1.6, shR: 2.95, axR: -0.15, elR: 0.25, hipL: 0.1, knL: 0, hipR: -0.1, knR: 0 }),
+};
+function mixPose(out, a, b, t) { for (const k of KEYS) out[k] = a[k] + (b[k] - a[k]) * t; return out; }
+const tmpPose = {};
+
+// referee poses (faces +x local, rotated toward camera); arms: L = his left (-z), R = his right (+z)
+const RBASE = { y: 0, drop: 0, lunge: 0, yaw: 0, lean: 0, head: 0, shL: 0.08, axL: -0.1, elL: 0.15, shR: 0.08, axR: -0.1, elR: 0.15, hipL: 0.05, abL: 0, knL: 0.02, hipR: -0.05, abR: 0, knR: 0.02, fall: 0, twL: 0, twR: 0 };
+const RP = o => Object.assign({}, RBASE, o);
+
+// ---------- Rig renderer ----------
+const RM = { root: mat(), hip: mat(), torso: mat(), a: mat(), b: mat(), c: mat() };
+function drawRig(parts, x, z, faceYaw, pose, tint) {
+  const fk = clamp(pose.fall / 1.52, 0, 1);
+  const root = ident(RM.root); translate(root, x, TATAMI_TOP + fk * 0.16, z); rotY(root, faceYaw);
+  translate(root, pose.lunge, 0, 0);
+  if (pose.fall > 0.001) rotZ(root, pose.fall);
+  const hip = translate(cp(RM.hip, root), 0, 0.95 + pose.drop + pose.y, 0);
+  const pv = rotY(cp(RM.a, hip), pose.yaw * 0.45); draw(parts.pelvis, pv, tint);
+  const tor = rotZ(rotY(cp(RM.torso, hip), pose.yaw), -pose.lean); draw(parts.torso, tor, tint);
+  const hd = rotZ(rotY(translate(cp(RM.a, tor), 0, 0.55, 0), -pose.yaw * 0.6), -pose.head); draw(parts.head, hd, tint);
+  // arms: lead at -z, rear at +z. Positive ax brings arm toward centreline.
+  for (const side of [-1, 1]) {
+    const L = side < 0, sh = L ? pose.shL : pose.shR, ax = L ? pose.axL : pose.axR, el = L ? pose.elL : pose.elR, tw = L ? pose.twL : pose.twR;
+    const A = translate(cp(RM.a, tor), 0, 0.45, side * 0.215);
+    rotX(A, side * ax); rotZ(A, sh); rotY(A, tw * 0.3); draw(parts.upper, A, tint);
+    const B = rotZ(translate(cp(RM.b, A), 0, -0.29, 0), el); draw(parts.fore, B, tint);
+  }
+  for (const side of [-1, 1]) {
+    const L = side < 0, hp = L ? pose.hipL : pose.hipR, ab = L ? pose.abL : pose.abR, kn = L ? pose.knL : pose.knR;
+    const A = translate(cp(RM.a, hip), 0, -0.04, side * 0.1);
+    rotX(A, -side * ab); rotZ(A, hp); draw(parts.thigh, A, tint);
+    const B = rotZ(translate(cp(RM.b, A), 0, -0.46, 0), -kn); draw(parts.shin, B, tint);
+  }
+}
+
+// ---------- Audio ----------
+const AU = { ctx: null, master: null, sfx: null, music: null, noise: null, muted: load('skMuted') === '1', musicOn: false, next: 0, step: 0 };
+function audioInit() { try { if (!AU.ctx) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return; const c = AU.ctx = new A();
+  AU.master = c.createGain(); AU.master.gain.value = AU.muted ? 0 : 0.75; AU.master.connect(c.destination);
+  AU.sfx = c.createGain(); AU.sfx.gain.value = 0.9; AU.sfx.connect(AU.master); AU.music = c.createGain(); AU.music.gain.value = 0.25; AU.music.connect(AU.master);
+  const len = c.sampleRate; AU.noise = c.createBuffer(1, len, c.sampleRate); const d = AU.noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; }
+  if (AU.ctx.state === 'suspended') AU.ctx.resume(); } catch (e) {} }
+function tone(type, f1, f2, dur, vol, t0 = 0, dest = AU.sfx, att = 0.006) { const c = AU.ctx, t = t0 || c.currentTime, o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.03); }
+function noise(dur, vol, ftype, freq, t0 = 0, dest = AU.sfx, q = 1) { const c = AU.ctx, t = t0 || c.currentTime, s = c.createBufferSource(); s.buffer = AU.noise;
+  const f = c.createBiquadFilter(); f.type = ftype; f.frequency.value = freq; f.Q.value = q; const g = c.createGain();
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.02); }
+function kiai(pitch) { // short shouted "HA!" made from a buzzy tone through vowel-like filters
+  const c = AU.ctx, t = c.currentTime, o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(pitch, t); o.frequency.exponentialRampToValueAtTime(pitch * 0.7, t + 0.22);
+  const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+  for (const [f, q, v] of [[800, 6, 1], [1250, 8, 0.6]]) { const b = c.createBiquadFilter(); b.type = 'bandpass'; b.frequency.value = f; b.Q.value = q; const gg = c.createGain(); gg.gain.value = v; o.connect(b); b.connect(gg); gg.connect(g); }
+  g.connect(AU.sfx); o.start(t); o.stop(t + 0.26); noise(0.08, 0.06, 'highpass', 2500);
+}
+function sfx(n, a) {
+  if (!AU.ctx || AU.ctx.state !== 'running') return; const now = AU.ctx.currentTime;
+  try { switch (n) {
+    case 'swing': noise(0.16, 0.12, 'bandpass', 1400, 0, AU.sfx, 0.8); break;
+    case 'kiai': kiai(a || 220); break;
+    case 'hit': noise(0.12, 0.45, 'lowpass', 1200); tone('sine', 140, 50, 0.16, 0.5); tone('square', 900, 200, 0.05, 0.05); break;
+    case 'hitBig': noise(0.25, 0.55, 'lowpass', 1500); tone('sine', 110, 35, 0.3, 0.6); break;
+    case 'block': tone('triangle', 1200, 700, 0.07, 0.12); noise(0.06, 0.2, 'bandpass', 2400, 0, AU.sfx, 2); break;
+    case 'parry': tone('triangle', 1600, 900, 0.12, 0.14); tone('sine', 2400, 2000, 0.15, 0.06); break;
+    case 'crowd': { noise(1.4, 0.12, 'bandpass', 900, 0, AU.sfx, 0.5); noise(1.2, 0.08, 'bandpass', 1800, now + 0.05, AU.sfx, 0.6); break; }
+    case 'ko': noise(0.6, 0.5, 'lowpass', 600); tone('sine', 80, 30, 0.6, 0.6); break;
+    case 'whistle': tone('sine', 2600, 2700, 0.5, 0.12, 0, AU.sfx, 0.02); tone('sine', 2650, 2600, 0.5, 0.06, 0, AU.sfx, 0.02); break;
+    case 'start': [0, 3, 7, 12].forEach((s, i) => tone('triangle', 330 * Math.pow(2, s / 12), 330 * Math.pow(2, s / 12), 0.16, 0.1, now + i * 0.08)); break;
+    case 'win': [0, 4, 7, 12, 16, 19, 24].forEach((s, i) => tone('square', 392 * Math.pow(2, s / 12), 392 * Math.pow(2, s / 12), 0.16, 0.06, now + i * 0.09)); break;
+    case 'lose': [7, 4, 0, -5].forEach((s, i) => tone('triangle', 330 * Math.pow(2, s / 12), 330 * Math.pow(2, s / 12), 0.25, 0.08, now + i * 0.16)); break;
+  } } catch (e) {}
+}
+// taiko + koto loop
+const BPM = 112, STEP_T = 60 / BPM / 4;
+const SCALE = [57, 60, 62, 64, 67, 69, 72, 74];
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+function scheduleStep(i, t) {
+  const s = i % 16, bar = Math.floor(i / 16) % 4, M = AU.music;
+  if (s === 0 || s === 6 || s === 10) tone('sine', 95, 40, 0.35, 0.55, t, M);
+  if (s === 4 || s === 12) { tone('sine', 190, 90, 0.18, 0.3, t, M); noise(0.08, 0.15, 'bandpass', 600, t, M, 1); }
+  if (s % 2 === 1) noise(0.03, 0.035, 'highpass', 6000, t, M);
+  if ([0, 3, 6, 8, 11, 14].includes(s)) { const n = SCALE[(s * 3 + bar * 2) % SCALE.length]; tone('triangle', mf(n), mf(n) * 0.998, 0.3, 0.07, t, M); tone('sine', mf(n + 12), mf(n + 12), 0.15, 0.02, t, M); }
+  if (s === 0) tone('sawtooth', mf(45 + (bar === 2 ? -2 : bar === 3 ? 3 : 0)), mf(45), 0.5, 0.05, t, M, 0.05);
+}
+setInterval(() => { if (!AU.ctx || !AU.musicOn || AU.ctx.state !== 'running') return; while (AU.next < AU.ctx.currentTime + 0.12) { scheduleStep(AU.step, AU.next); AU.next += STEP_T; AU.step++; } }, 25);
+const musicStart = () => { if (!AU.ctx) return; AU.musicOn = true; AU.next = AU.ctx.currentTime + 0.05; };
+const musicStop = () => { AU.musicOn = false; };
+
+// ---------- Game ----------
+const ATK = {
+  punch: { start: 0.11, act: 0.1, rec: 0.2, reach: 1.32, dmg: 8, pts: 1, call: 'YUKO', stun: 0.32, kb: 1.6, hy: 1.4, pose: 'punch', pitch: 260 },
+  kick:  { start: 0.22, act: 0.12, rec: 0.3, reach: 1.62, dmg: 12, pts: 2, call: 'WAZA-ARI', stun: 0.45, kb: 2.4, hy: 1.15, pose: 'kick', ch: 'kickCh', pitch: 230 },
+  hkick: { start: 0.32, act: 0.12, rec: 0.42, reach: 1.55, dmg: 18, pts: 3, call: 'IPPON', stun: 0.6, kb: 3.0, hy: 1.62, pose: 'hkick', ch: 'hkickCh', pitch: 200 },
+};
+const BOUND = 3.75, MIN_GAP = 0.85, START_X = 1.5;
+const DIFF = [
+  { name: 'Mudah', react: 0.38, block: 0.25, aggr: 0.35, think: 0.32, combo: 0, speed: 0.85, dmgMul: 0.8 },
+  { name: 'Sedang', react: 0.22, block: 0.5, aggr: 0.55, think: 0.2, combo: 0.25, speed: 1, dmgMul: 1 },
+  { name: 'Sulit', react: 0.12, block: 0.72, aggr: 0.75, think: 0.12, combo: 0.55, speed: 1.12, dmgMul: 1.15 },
+];
+let diff = DIFF[1], diffIdx = 1;
+function newFighter(isA) {
+  return { isA, x: isA ? -START_X : START_X, face: isA ? 1 : -1, hp: 100, lag: 100, pts: 0, rounds: 0, state: 'stand', t: 0, atk: null, hasHit: false,
+    stun: 0, kb: 0, blockT: 0, cd: 0, pose: Object.assign({}, POSE.stand), walkPh: 0, moving: 0, ph: Math.random() * 6, hitsLanded: 0, flash: 0 };
+}
+let A = newFighter(true), B = newFighter(false);
+const ref = { x: 0, z: -2.4, pose: Object.assign({}, RBASE), gesture: null, gt: 0, walkPh: 0 };
+const judges = [[-5, -5], [5, -5], [-5, 5], [5, 5]].map(([x, z]) => ({ x, z, red: 0, blue: 0 }));
+let state = 'menu', phase = 'idle', phaseT = 0, round = 1, timer = 60, paused = false, time = 0, hitstop = 0, slowmo = 0, shake = 0;
+let best = Number(load('skBest')) || 0, lastWinner = null, pendingEnd = null;
+let particles = [];
+const ai = { t: 0, plan: null, planT: 0, blockHold: 0, reactT: 0, reacted: false };
+
+function resetPositions(standPose) {
+  for (const F of [A, B]) {
+    F.x = F.isA ? -START_X : START_X; F.hp = 100; F.lag = 100; F.state = standPose ? 'stand' : 'idle'; F.t = 0; F.atk = null; F.stun = 0; F.kb = 0; F.cd = 0;
+  }
+}
+function startMatch(d) {
+  diffIdx = d; diff = DIFF[d]; audioInit();
+  A = newFighter(true); B = newFighter(false); round = 1; particles = []; pendingEnd = null;
+  state = 'play'; paused = false; setPhase('rei');
+  show('menu', false); show('over', false); show('pause', false); show('hud', true); show('credit', true);
+  show('controls', isTouch); updateRotateHint();
+  sfx('start'); musicStart(); updateHUD(true);
+}
+function setPhase(p) {
+  phase = p; phaseT = 0;
+  if (p === 'rei') { resetPositions(true); timer = 60; ref.gesture = null; callout('REI', '#ffffff', round === 1 ? 'saling memberi hormat' : 'RONDE ' + round); }
+  if (p === 'hajime') { for (const F of [A, B]) { F.state = 'idle'; F.t = 0; } ref.gesture = 'hajime'; ref.gt = 0; sfx('whistle');
+    callout(round === 1 ? 'SHOBU HAJIME!' : 'HAJIME!', '#ffd23f', round === 1 ? 'mulai!' : 'RONDE ' + round); }
+  if (p === 'yame') { ref.gesture = 'yame'; ref.gt = 0; sfx('whistle'); }
+}
+function endRound(winner, reason) {
+  if (phase !== 'fight') return;
+  setPhase('yame');
+  if (winner) winner.rounds++;
+  lastWinner = winner;
+  phase = 'result'; phaseT = 0;
+  ref.gesture = winner ? (winner.isA ? 'winA' : 'winB') : 'draw'; ref.gt = 0;
+  const name = winner ? (winner.isA ? 'AKA NO KACHI!' : 'AO NO KACHI!') : 'HIKIWAKE';
+  const sub = winner ? (winner.isA ? 'Shafa (merah) menang ronde ini' : 'Komputer (biru) menang ronde ini') : 'Seri';
+  callout(name, winner ? (winner.isA ? '#ff6b6b' : '#6ba8ff') : '#fff', reason ? reason + ' · ' + sub : sub, 2400);
+  updateHUD(true);
+}
+function finishRoundFlow() {
+  if (A.rounds >= 2 || B.rounds >= 2 || round >= 5) { matchOver(); return; }
+  round++; setPhase('rei');
+}
+function matchOver() {
+  state = 'over'; musicStop();
+  const won = A.rounds > B.rounds;
+  const score = Math.round(A.pts * 100 + A.rounds * 500 + (won ? 1000 * (diffIdx + 1) : 0));
+  const isNew = score > best; if (isNew) { best = score; store('skBest', best); }
+  $('overTitle').textContent = won ? 'SHAFA JUARA! 🏆' : A.rounds === B.rounds ? 'SERI! 🤝' : 'KALAH 😵';
+  $('overSub').innerHTML = `Ronde <b style="color:#ff6b6b">${A.rounds}</b> – <b style="color:#6ba8ff">${B.rounds}</b> · Level ${diff.name}`;
+  $('overStats').innerHTML = `Skor: <b>${score}</b>${isNew ? ' · <span class="best">★ REKOR BARU</span>' : ''}<br>Poin teknik: ${A.pts} vs ${B.pts}`;
+  show('hud', false); show('controls', false); show('credit', false); show('rotate', false); show('over', true);
+  sfx(won ? 'win' : 'lose');
+}
+
+// ---------- Combat ----------
+function startAttack(F, kind) {
+  if (F.cd > 0 || F.stun > 0) return false;
+  if (!(F.state === 'idle' || F.state === 'walk' || F.state === 'block')) return false;
+  F.state = 'atk'; F.atk = ATK[kind]; F.atkKind = kind; F.t = 0; F.hasHit = false; F.cd = 0;
+  sfx('swing'); if (Math.random() < 0.7) sfx('kiai', F.isA ? 300 : 210);
+  return true;
+}
+function startBlock(F) { if (F.state === 'idle' || F.state === 'walk') { F.state = 'block'; F.t = 0; F.blockT = time; } }
+function tryHit(F, O) {
+  const a = F.atk, d = Math.abs(O.x - F.x);
+  if (d > a.reach || O.state === 'ko') return;
+  F.hasHit = true;
+  const hx_ = O.x - F.face * 0.15, hy = a.hy;
+  if (O.state === 'block') {
+    const parry = time - O.blockT < 0.16;
+    O.hp -= a.dmg * 0.12; O.kb = F.face * a.kb * 0.35; F.kb = -F.face * 0.9;
+    burst(hx_, hy, [0.6, 0.85, 1], 8, 2.5);
+    if (parry) { F.state = 'hit'; F.t = 0; F.stun = 0.45; sfx('parry'); if (O.isA) callout('TANGKIS!', '#7dd3ff', 'parry sempurna', 700); }
+    else sfx('block');
+    hitstop = 0.04;
+  } else {
+    const mulD = F.isA ? 1 : diff.dmgMul;
+    O.hp -= a.dmg * mulD; O.state = 'hit'; O.t = 0; O.stun = a.stun; O.kb = F.face * a.kb; O.atk = null; O.flash = 0.12;
+    F.pts += a.pts; F.hitsLanded++;
+    sfx(a.pts >= 2 ? 'hitBig' : 'hit'); sfx('crowd');
+    burst(hx_, hy, [1, 0.95, 0.7], 14, 4); burst(hx_, hy, F.isA ? C.red : C.blue, 8, 3);
+    hitstop = a.pts >= 3 ? 0.12 : 0.07; shake = a.pts >= 3 ? 0.18 : 0.09;
+    ref.gesture = 'point' + a.pts; ref.side = Math.sign(F.x - ref.x) || F.face; ref.gt = 0;
+    for (const j of judges) { if (F.isA) j.red = 1; else j.blue = 1; }
+    callout(a.call + '!', F.isA ? '#ff6b6b' : '#6ba8ff', (F.isA ? 'AKA' : 'AO') + ' +' + a.pts, 750);
+    if (!F.isA) flashRed();
+    if (navigator.vibrate && !F.isA) try { navigator.vibrate(40); } catch (e) {}
+    if (O.hp <= 0) {
+      O.hp = 0; O.state = 'ko'; O.t = 0; slowmo = 1.1; shake = 0.25; sfx('ko');
+      pendingEnd = { w: F, t: 0.75 };
+    }
+  }
+  updateHUD(true);
+}
+function burst(x, y, col, n, pw) {
+  for (let i = 0; i < n && particles.length < 120; i++) { const a = Math.random() * 6.28, b = Math.random() * 3.14 - 1.57, s = pw * (0.4 + Math.random() * 0.6);
+    particles.push({ x, y, z: 0.1, vx: Math.cos(a) * s, vy: Math.sin(a) * s + 1, vz: Math.sin(b) * s * 0.5, life: 0.35 + Math.random() * 0.3, max: 0.6, col, size: 0.03 + Math.random() * 0.04 }); }
+}
+function updateFighter(F, O, inp, dt) {
+  F.t += dt;
+  if (F.cd > 0) F.cd -= dt;
+  if (F.flash > 0) F.flash -= dt;
+  F.lag = damp(F.lag, F.hp, F.lag > F.hp ? 2.2 : 20, dt);
+  let vx = 0;
+  switch (F.state) {
+    case 'hit': if (F.t > F.stun) F.state = 'idle'; break;
+    case 'atk': {
+      const a = F.atk, tA = a.start, tB = a.start + a.act, tC = tB + a.rec;
+      if (!F.hasHit && F.t >= tA && F.t <= tB) tryHit(F, O);
+      if (F.t >= tC) { F.state = 'idle'; F.atk = null; F.cd = 0.08; }
+      break;
+    }
+    case 'block': if (!inp.block) F.state = 'idle'; break;
+    case 'idle': case 'walk':
+      if (phase !== 'fight') break;
+      if (inp.attack && startAttack(F, inp.attack)) break;
+      if (inp.block) { startBlock(F); break; }
+      if (inp.move) { const fwd = Math.sign(inp.move) === F.face; vx = inp.move * (fwd ? 2.3 : 1.9) * (F.isA ? 1 : diff.speed); F.state = 'walk'; }
+      else F.state = 'idle';
+      break;
+  }
+  F.moving = vx;
+  F.kb = damp(F.kb, 0, 6, dt);
+  F.x += (vx + F.kb) * dt;
+  F.x = clamp(F.x, -BOUND, BOUND);
+}
+function separate() {
+  const gap = B.x - A.x;
+  if (gap < MIN_GAP) { const push = (MIN_GAP - gap) / 2; A.x -= push; B.x += push;
+    if (A.x < -BOUND) { B.x += -BOUND - A.x; A.x = -BOUND; } if (B.x > BOUND) { A.x -= B.x - BOUND; B.x = BOUND; } }
+}
+
+// ---------- AI (AO) ----------
+function aiInput(dt) {
+  const inp = { move: 0, block: false, attack: null };
+  if (phase !== 'fight' || B.state === 'ko' || A.state === 'ko') return inp;
+  const d = B.x - A.x;
+  // react to incoming attacks
+  if (A.state === 'atk' && A.atk && A.t < A.atk.start + 0.02 && d < A.atk.reach + 0.35) {
+    if (!ai.reacted) { ai.reacted = true; ai.reactT = diff.react * (0.7 + Math.random() * 0.6); ai.willBlock = Math.random() < diff.block; ai.willStep = !ai.willBlock && Math.random() < diff.block * 0.6; }
+  } else if (A.state !== 'atk') ai.reacted = false;
+  if (ai.reacted) { ai.reactT -= dt; if (ai.reactT <= 0) { if (ai.willBlock) { ai.blockHold = 0.42; ai.willBlock = false; } else if (ai.willStep) { ai.plan = 'back'; ai.planT = 0.35; ai.willStep = false; } } }
+  if (ai.blockHold > 0) { ai.blockHold -= dt; inp.block = true; return inp; }
+  ai.t -= dt; if (ai.planT > 0) ai.planT -= dt;
+  if (ai.t <= 0) {
+    ai.t = diff.think * (0.6 + Math.random() * 0.8);
+    const r = Math.random();
+    if (B.state === 'idle' || B.state === 'walk') {
+      if (d <= ATK.punch.reach - 0.05 && r < diff.aggr) ai.plan = Math.random() < 0.55 ? 'punch' : Math.random() < 0.7 ? 'kick' : 'hkick';
+      else if (d <= ATK.kick.reach - 0.05 && r < diff.aggr * 0.85) ai.plan = Math.random() < 0.72 ? 'kick' : 'hkick';
+      else if (d > 1.75) { ai.plan = 'fwd'; ai.planT = 0.25 + Math.random() * 0.4; }
+      else if (d < 1.05 && Math.random() < 0.5) { ai.plan = 'back'; ai.planT = 0.2 + Math.random() * 0.3; }
+      else if (Math.random() < 0.35) { ai.plan = Math.random() < 0.5 ? 'fwd' : 'back'; ai.planT = 0.15 + Math.random() * 0.25; }
+      else ai.plan = 'wait';
+    }
+  }
+  switch (ai.plan) {
+    case 'punch': case 'kick': case 'hkick':
+      inp.attack = ai.plan;
+      if (B.state === 'atk') { if (Math.random() < diff.combo && ai.plan === 'punch') { ai.plan = 'kick'; ai.t = ATK.punch.start + ATK.punch.act + ATK.punch.rec; } else ai.plan = 'wait'; }
+      break;
+    case 'fwd': inp.move = B.face; if (ai.planT <= 0) ai.plan = 'wait'; break;
+    case 'back': inp.move = -B.face; if (ai.planT <= 0) ai.plan = 'wait'; break;
+  }
+  if (B.x > BOUND - 0.2 && inp.move > 0) inp.move = 0;
+  return inp;
+}
+
+// ---------- Input (player AKA) ----------
+const keys = {};
+const touch = { L: false, R: false, B: false };
+let queued = null, queuedT = 0;
+function queueAttack(k) { queued = k; queuedT = 0.2; }
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase(); if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault();
+  if (e.repeat) { keys[k] = true; return; }
+  keys[k] = true; audioInit();
+  if (k === 'p' || k === 'escape') { setPause(!paused); return; }
+  if (state !== 'play' || paused) return;
+  if (k === 'j' || k === 'z') queueAttack('punch');
+  if (k === 'k' || k === 'x') queueAttack('kick');
+  if (k === 'l' || k === 'c' || k === 'i') queueAttack('hkick');
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; touch.L = touch.R = touch.B = false; });
+function playerInput() {
+  const inp = { move: 0, block: false, attack: null };
+  if (keys['a'] || keys['arrowleft'] || touch.L) inp.move -= 1;
+  if (keys['d'] || keys['arrowright'] || touch.R) inp.move += 1;
+  inp.block = !!(keys['s'] || keys['arrowdown'] || keys[' '] || touch.B);
+  if (queued) inp.attack = queued;
+  return inp;
+}
+function bindHold(id, key) {
+  const el = $(id);
+  const on = e => { e.preventDefault(); audioInit(); touch[key] = true; el.classList.add('on'); try { el.setPointerCapture(e.pointerId); } catch (_) {} };
+  const off = () => { touch[key] = false; el.classList.remove('on'); };
+  el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
+}
+function bindTap(id, atk) { const el = $(id); el.addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); queueAttack(atk); el.classList.add('on'); setTimeout(() => el.classList.remove('on'), 120); }); }
+bindHold('bL', 'L'); bindHold('bR', 'R'); bindHold('bB', 'B'); bindTap('bP', 'punch'); bindTap('bK', 'kick'); bindTap('bH', 'hkick');
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('.cbtn')) e.preventDefault(); });
+const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+// ---------- Update ----------
+function poseFor(F, dt) {
+  let target;
+  const bounce = Math.abs(Math.sin(time * 5.6 + F.ph)) * 0.045;
+  switch (F.state) {
+    case 'stand': target = phase === 'rei' && phaseT > 0.6 && phaseT < 1.6 ? POSE.bow : POSE.stand; break;
+    case 'block': target = Object.assign(tmpPose, POSE.block); target.y = bounce * 0.4; break;
+    case 'hit': target = POSE.hit; break;
+    case 'ko': target = POSE.ko; break;
+    case 'win': target = POSE.win; break;
+    case 'atk': {
+      const a = F.atk, t = F.t, ext = POSE[a.pose], ch = a.ch ? POSE[a.ch] : null;
+      if (t < a.start) { if (ch) { const k = t / a.start; target = k < 0.55 ? mixPose(tmpPose, POSE.kamae, ch, ease(k / 0.55)) : mixPose(tmpPose, ch, ext, ease((k - 0.55) / 0.45)); } else target = mixPose(tmpPose, POSE.kamae, ext, ease(t / a.start)); }
+      else if (t < a.start + a.act) target = ext;
+      else { const k = clamp((t - a.start - a.act) / a.rec, 0, 1); target = ch ? (k < 0.5 ? mixPose(tmpPose, ext, ch, ease(k / 0.5)) : mixPose(tmpPose, ch, POSE.kamae, ease((k - 0.5) / 0.5))) : mixPose(tmpPose, ext, POSE.kamae, ease(k)); }
+      break;
+    }
+    default: {
+      target = Object.assign(tmpPose, POSE.kamae); target.y = bounce;
+      if (F.state === 'walk') { F.walkPh += dt * 9; const s = Math.sin(F.walkPh) * 0.16; target.hipL += s; target.hipR -= s * 0.8; target.knL += Math.max(0, Math.cos(F.walkPh)) * 0.25; target.knR += Math.max(0, -Math.cos(F.walkPh)) * 0.25; }
+    }
+  }
+  const k = F.state === 'atk' ? 34 : F.state === 'ko' ? 7 : F.state === 'stand' ? 6 : 18;
+  for (const key of KEYS) F.pose[key] = damp(F.pose[key], target[key], k, dt);
+}
+function refPose(dt) {
+  const g = ref.gesture; ref.gt += dt; let t = RBASE;
+  const s = ref.side || 1; // +1 = point toward world +x
+  // referee faces the camera: his right arm (+z local) points to world -x
+  const armTo = (worldDir, raise) => worldDir < 0 ? RP({ shR: 0.15, axR: -raise, elR: 0.1 }) : RP({ shL: 0.15, axL: -raise, elL: 0.1 });
+  if (g === 'hajime') t = ref.gt < 0.5 ? RP({ shR: 1.5, elR: 0.1, shL: 1.5, elL: 0.1, axL: 0.3, axR: 0.3 }) : RP({ shR: 0.6, elR: 0.1, shL: 0.6, elL: 0.1, axL: 0.3, axR: 0.3 });
+  else if (g === 'yame') t = RP({ shR: 1.55, elR: 0.05, axR: 0.25 });
+  else if (g === 'point1') t = armTo(s, 0.9);
+  else if (g === 'point2') t = armTo(s, 1.5);
+  else if (g === 'point3') t = armTo(s, 2.2);
+  else if (g === 'winA') t = armTo(Math.sign(A.x - ref.x) || -1, 2.3);
+  else if (g === 'winB') t = armTo(Math.sign(B.x - ref.x) || 1, 2.3);
+  else if (g === 'draw') t = RP({ shR: 1.4, shL: 1.4, axL: 0.6, axR: 0.6, elL: 0.1, elR: 0.1 });
+  if (g && g.startsWith('point') && ref.gt > 1.1) ref.gesture = null;
+  if (g === 'hajime' && ref.gt > 1.2) ref.gesture = null;
+  const tgtX = clamp((A.x + B.x) / 2, -3, 3);
+  const moving = Math.abs(tgtX - ref.x) > 0.15;
+  ref.x = damp(ref.x, tgtX, 1.6, dt);
+  if (moving && !ref.gesture) { ref.walkPh += dt * 6; t = Object.assign({}, t, { hipL: 0.05 + Math.sin(ref.walkPh) * 0.2, hipR: -0.05 - Math.sin(ref.walkPh) * 0.2 }); }
+  for (const key of KEYS) ref.pose[key] = damp(ref.pose[key], t[key], 9, dt);
+  for (const j of judges) { j.red = Math.max(0, j.red - dt * 0.9); j.blue = Math.max(0, j.blue - dt * 0.9); }
+}
+function step(dtReal) {
+  let dt = dtReal;
+  if (slowmo > 0) { slowmo -= dtReal; dt *= 0.3; }
+  time += dt;
+  if (hitstop > 0) { hitstop -= dtReal; dt = 0; }
+  if (queuedT > 0) { queuedT -= dtReal; if (queuedT <= 0) queued = null; }
+  if (state === 'play' && dt > 0) {
+    phaseT += dt;
+    if (pendingEnd) { pendingEnd.t -= dt; if (pendingEnd.t <= 0) { const w = pendingEnd.w; pendingEnd = null; endRound(w, 'KO'); } }
+    if (phase === 'rei' && phaseT > 2.3) setPhase('hajime');
+    if (phase === 'hajime' && phaseT > 0.9) { phase = 'fight'; phaseT = 0; }
+    if (phase === 'fight') {
+      timer -= dt;
+      if (timer <= 0) { timer = 0; const w = A.hp > B.hp + 0.5 ? A : B.hp > A.hp + 0.5 ? B : A.pts > B.pts ? A : B.pts > A.pts ? B : null; endRound(w, 'Waktu habis'); }
+    }
+    if (phase === 'result' && phaseT > 0.9) { for (const F of [A, B]) if (F.state !== 'ko') F.state = F === lastWinner ? 'win' : 'stand'; }
+    if (phase === 'result' && phaseT > 3.2) finishRoundFlow();
+    const pi = playerInput(), bi = aiInput(dt);
+    const beforeA = A.state;
+    updateFighter(A, B, pi, dt); updateFighter(B, A, bi, dt);
+    if (pi.attack && A.state === 'atk' && beforeA !== 'atk') { queued = null; queuedT = 0; }
+    separate();
+  } else if (state === 'menu') {
+    // attract mode: two fighters spar slowly
+    phase = 'fight';
+    const pi = demoInput(A, B, dt), bi = demoInput(B, A, dt);
+    updateFighter(A, B, pi, dt); updateFighter(B, A, bi, dt); separate();
+    for (const F of [A, B]) { if (F.hp < 40) F.hp = 100; }
+  }
+  for (const F of [A, B]) poseFor(F, dtReal * (slowmo > 0 ? 0.3 : 1) * (hitstop > 0 ? 0 : 1));
+  refPose(dt);
+  for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.vy -= 6 * dt; p.life -= dt; }
+  particles = particles.filter(p => p.life > 0);
+  shake = damp(shake, 0, 8, dtReal);
+  if (state === 'play') updateHUD(false);
+}
+const demo = new Map();
+function demoInput(F, O, dt) {
+  let s = demo.get(F); if (!s) { s = { t: 0, plan: 'wait', pt: 0 }; demo.set(F, s); }
+  const inp = { move: 0, block: false, attack: null }, d = Math.abs(O.x - F.x);
+  s.t -= dt; if (s.pt > 0) s.pt -= dt;
+  if (s.t <= 0) { s.t = 0.35 + Math.random() * 0.5; const r = Math.random();
+    s.plan = d < 1.3 && r < 0.4 ? pick(['punch', 'kick', 'hkick']) : d > 1.8 ? 'fwd' : d < 1.1 ? 'back' : r < 0.3 ? 'block' : r < 0.6 ? 'fwd' : 'wait'; s.pt = 0.3; }
+  if (['punch', 'kick', 'hkick'].includes(s.plan)) { inp.attack = s.plan; if (F.state === 'atk') s.plan = 'wait'; }
+  if (s.plan === 'fwd' && s.pt > 0) inp.move = F.face; if (s.plan === 'back' && s.pt > 0) inp.move = -F.face; if (s.plan === 'block' && s.pt > 0) inp.block = true;
+  return inp;
+}
+
+// ---------- Rendering ----------
+const VP = mat(), Pm = mat(), V = mat(), M = mat(), MT = mat();
+const NO_TINT = new Float32Array([0, 0, 0, 0]), tintBuf = new Float32Array(4);
+let curBuf = null;
+function bindMesh(mesh) { if (curBuf === mesh.buf) return; gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buf);
+  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 40, 0); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 40, 12); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 40, 24); curBuf = mesh.buf; }
+let lastAlpha = -1, lastEmis = -1;
+function draw(mesh, m, tint, alpha = 1, emis = 0) { bindMesh(mesh); gl.uniformMatrix4fv(U.uM, false, m); gl.uniform4fv(U.uTint, tint || NO_TINT);
+  if (alpha !== lastAlpha) { gl.uniform1f(U.uAlpha, alpha); lastAlpha = alpha; } if (emis !== lastEmis) { gl.uniform1f(U.uEmis, emis); lastEmis = emis; }
+  gl.drawArrays(gl.TRIANGLES, 0, mesh.count); }
+const tint = (c, a) => { tintBuf[0] = c[0]; tintBuf[1] = c[1]; tintBuf[2] = c[2]; tintBuf[3] = a; return tintBuf; };
+let renderScale = DPR0, W = 0, H = 0;
+function resize() { W = window.innerWidth; H = window.innerHeight; canvas.width = Math.max(1, Math.floor(W * renderScale)); canvas.height = Math.max(1, Math.floor(H * renderScale)); updateRotateHint(); }
+window.addEventListener('resize', resize);
+const camEye = [0, 1.8, 7], camTgt = [0, 1, 0];
+let camD = 6;
+function drawTexQuad(tex, x, y, z, w, h, bright = 1) {
+  gl.uniform1i(TX.U.uTex, 0); gl.uniform1f(TX.U.uBright, bright); gl.bindTexture(gl.TEXTURE_2D, tex);
+  ident(M); translate(M, x, y, z); scale(M, w, h, 1); gl.uniformMatrix4fv(TX.U.uM, false, M); gl.drawArrays(gl.TRIANGLES, 0, 6);
+}
+function render(dt) {
+  const asp = W / H, portrait = asp < 1;
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  // camera: frames both fighters
+  const fov = (portrait ? 64 : 40) * Math.PI / 180, t = Math.tan(fov / 2);
+  const mid = (A.x + B.x) / 2, gap = Math.abs(B.x - A.x);
+  let wantD;
+  if (state === 'menu') { const a = time * 0.15; wantD = portrait ? 8.5 : 6.2; camEye[0] = mid + Math.sin(a) * 3; camEye[2] = Math.cos(a) * 1.5 + wantD; camEye[1] = 1.9; camTgt[0] = mid; camTgt[1] = portrait ? 0.6 : 1.0; camTgt[2] = 0; }
+  else {
+    const needHalfW = gap / 2 + (portrait ? 0.75 : 1.35);
+    wantD = clamp(needHalfW / (t * asp), 3.8, 12) ;
+    if (phase === 'rei') wantD += 0.8;
+    camD = damp(camD, wantD, 3, dt);
+    camEye[0] = damp(camEye[0], mid, 4, dt); camEye[1] = 1.45 + camD * 0.1; camEye[2] = camD;
+    camTgt[0] = camEye[0]; camTgt[1] = portrait ? 0.25 + camD * 0.02 : 1.0; camTgt[2] = 0;
+  }
+  if (shake > 0.005) { camEye[0] += (Math.random() - .5) * shake; camEye[1] += (Math.random() - .5) * shake; }
+  perspective(Pm, fov, asp, 0.1, 120); lookAt(V, camEye, camTgt); mul(VP, Pm, V);
+
+  gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.BLEND);
+  gl.useProgram(BG.p); gl.uniform1f(BG.U.uTime, time); gl.uniform1f(BG.U.uAsp, asp);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bgBuf); gl.enableVertexAttribArray(0); gl.disableVertexAttribArray(1); gl.disableVertexAttribArray(2);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); gl.drawArrays(gl.TRIANGLES, 0, 3); curBuf = null;
+
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.depthFunc(gl.LEQUAL);
+  gl.useProgram(MAIN.p); gl.enableVertexAttribArray(1); gl.enableVertexAttribArray(2);
+  gl.uniformMatrix4fv(U.uVP, false, VP); gl.uniform3fv(U.uCam, camEye);
+  gl.uniform3fv(U.uSun, [0.25, 0.9, 0.55].map(v => v / Math.hypot(0.25, 0.9, 0.55))); gl.uniform3fv(U.uSunC, [0.85, 0.82, 0.78]);
+  gl.uniform3fv(U.uSkyC, [0.5, 0.52, 0.6]); gl.uniform3fv(U.uGndC, [0.22, 0.2, 0.22]); gl.uniform3fv(U.uFogC, [0.07, 0.08, 0.13]); gl.uniform1f(U.uFog, 0.028);
+  lastAlpha = lastEmis = -1;
+  ident(M); draw(ARENA, M);
+  // judges with flags
+  for (const j of judges) {
+    const yaw = Math.atan2(j.z, -j.x); // face the centre
+    ident(M); translate(M, j.x, TATAMI_TOP, j.z); rotY(M, yaw); draw(MESH.judge, M);
+    for (const [side, mesh, up] of [[0.27, MESH.flagR, j.red], [-0.27, MESH.flagB, j.blue]]) {
+      cp(MT, M); translate(MT, 0.22, 0.62, side); rotX(MT, side > 0 ? -up * 2.4 : up * 2.4); rotZ(MT, -0.3 + up * 0.3); draw(mesh, MT);
+    }
+  }
+  // referee faces the camera
+  drawRig(MESH.ref, ref.x, ref.z, -Math.PI / 2, ref.pose, null);
+  // fighters
+  for (const F of [A, B]) {
+    const tc = F.flash > 0 ? tint([1, 1, 1], 0.55) : null;
+    drawRig(F.isA ? MESH.aka : MESH.ao, F.x, 0, F.face > 0 ? 0 : Math.PI, F.pose, tc);
+  }
+  for (const p of particles) { const s = p.size * clamp(p.life / p.max * 1.5, 0, 1); ident(M); translate(M, p.x, p.y, p.z); scale(M, s, s, s); draw(MESH.star, M, tint(p.col, 1), 1, 1); }
+  // banners
+  gl.useProgram(TX.p); gl.uniformMatrix4fv(TX.U.uVP, false, VP); gl.uniform3fv(TX.U.uCam, camEye); gl.uniform3fv(TX.U.uFogC, [0.07, 0.08, 0.13]); gl.uniform1f(TX.U.uFog, 0.012);
+  gl.activeTexture(gl.TEXTURE0); gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12); gl.disableVertexAttribArray(2);
+  drawTexQuad(TEX_MAIN, 0, 7.6, -16.18, 16, 2.0, 1.05);
+  drawTexQuad(TEX_NAME, -12.5, 7.6, -16.18, 6, 1.5, 1.05); drawTexQuad(TEX_NAME, 12.5, 7.6, -16.18, 6, 1.5, 1.05);
+  drawTexQuad(TEX_KUMITE, 0, 0.75, 7.21, 3.4, 0.7, 0.95);   // official table front
+  curBuf = null;
+  // shadows
+  gl.useProgram(MAIN.p); gl.enableVertexAttribArray(2); lastAlpha = lastEmis = -1;
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  for (const F of [A, B, { x: ref.x, z: ref.z }]) { ident(M); translate(M, F.x + (F.pose && F.pose.fall > 0.5 ? -F.face * 0.8 : 0), TATAMI_TOP + 0.006, F.z || 0); scale(M, F.pose && F.pose.fall > 0.5 ? 1.0 : 0.45, 1, 0.32); draw(MESH.disc, M, tint([0, 0, 0], 1), 0.3); }
+  gl.depthMask(true); gl.disable(gl.BLEND);
+}
+
+// ---------- HUD ----------
+const hc = {};
+function updateHUD(force) {
+  const set = (id, v, f) => { if (force || hc[id] !== v) { hc[id] = v; f(v); } };
+  set('hpA', Math.round(A.hp * 10), v => $('hpA').style.width = v / 10 + '%'); set('hpB', Math.round(B.hp * 10), v => $('hpB').style.width = v / 10 + '%');
+  set('lagA', Math.round(A.lag), v => $('lagA').style.width = v + '%'); set('lagB', Math.round(B.lag), v => $('lagB').style.width = v + '%');
+  set('ptA', A.pts, v => $('ptA').textContent = v); set('ptB', B.pts, v => $('ptB').textContent = v);
+  set('tm', Math.ceil(timer), v => $('timer').textContent = v); set('rd', round, v => $('round').textContent = 'RONDE ' + v);
+  set('rwA', A.rounds, v => [...$('rwA').children].forEach((el, i) => el.classList.toggle('on', i < v)));
+  set('rwB', B.rounds, v => [...$('rwB').children].forEach((el, i) => el.classList.toggle('on', i < v)));
+}
+let calloutTimer = 0;
+function callout(text, color, sub, ms = 1100) { const c = $('callout'); c.innerHTML = text + (sub ? '<small>' + sub + '</small>' : ''); c.style.color = color || '#fff';
+  c.classList.remove('show'); void c.offsetWidth; c.classList.add('show'); clearTimeout(calloutTimer); calloutTimer = setTimeout(() => c.classList.remove('show'), ms); }
+function flashRed() { const f = $('flash'); f.style.transition = 'none'; f.style.opacity = 1; void f.offsetWidth; f.style.transition = 'opacity .45s'; f.style.opacity = 0; }
+const show = (id, on) => $(id).classList.toggle('hidden', !on);
+function updateRotateHint() { const r = $('rotate'); if (!r) return; r.classList.toggle('hidden', !(state === 'play' && isTouch && W < H)); }
+$('ctrlHint').innerHTML = isTouch
+  ? 'Tombol <b>◀ ▶</b> buat maju/mundur · <b>👊 Pukul</b> (1 poin) · <b>🦶 Tendang</b> (2 poin) · <b>🦵 Tinggi</b> (3 poin) · tahan <b>🛡️ Tangkis</b>'
+  : 'Gerak <b>A D</b> / <b>← →</b> · Pukul <b>J</b> (1 poin) · Tendang <b>K</b> (2 poin) · Tendang tinggi <b>L</b> (3 poin) · Tangkis tahan <b>S</b> / <b>↓</b> / <b>Spasi</b> · Pause <b>P</b>';
+const refreshBest = () => { $('menuBest').textContent = best ? '🏆 Rekor skor: ' + best : ''; }; refreshBest();
+const ICON_SOUND = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+const ICON_MUTE = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+const refreshMute = () => { $('btnMute').innerHTML = AU.muted ? ICON_MUTE : ICON_SOUND; }; refreshMute();
+$('btnMute').addEventListener('click', () => { audioInit(); AU.muted = !AU.muted; store('skMuted', AU.muted ? '1' : '0'); if (AU.master) AU.master.gain.value = AU.muted ? 0 : 0.75; refreshMute(); });
+document.querySelectorAll('.dbtn').forEach(b => b.addEventListener('click', () => startMatch(+b.dataset.d)));
+$('btnAgain').addEventListener('click', () => startMatch(diffIdx));
+function toMenu() { state = 'menu'; paused = false; musicStop(); A = newFighter(true); B = newFighter(false); demo.clear();
+  show('over', false); show('pause', false); show('hud', false); show('controls', false); show('credit', false); show('rotate', false); show('menu', true); refreshBest(); }
+$('btnMenu').addEventListener('click', toMenu); $('btnPauseMenu').addEventListener('click', toMenu);
+function setPause(p) { if (state !== 'play') return; paused = p; show('pause', p); if (p) musicStop(); else { audioInit(); musicStart(); } }
+$('btnPause').addEventListener('click', () => setPause(true)); $('btnResume').addEventListener('click', () => setPause(false));
+document.addEventListener('visibilitychange', () => { if (document.hidden) setPause(true); });
+
+// ---------- Loop ----------
+resize();
+let last = performance.now(), perfAcc = 0, perfN = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  let dt = (now - last) / 1000; last = now; if (!(dt > 0)) dt = 1 / 60; dt = Math.min(dt, 0.05);
+  perfAcc += dt; perfN++;
+  if (perfAcc > 2) { const avg = perfAcc / perfN; perfAcc = 0; perfN = 0; if (avg > 1 / 45 && renderScale > 0.75 && !document.hidden) { renderScale = Math.max(0.75, renderScale - 0.35); resize(); } }
+  if (!paused) step(dt);
+  render(paused ? 0 : dt);
+}
+A.state = 'idle'; B.state = 'idle';
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
