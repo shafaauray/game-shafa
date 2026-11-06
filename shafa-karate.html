@@ -587,9 +587,9 @@ const ATK = {
 };
 const BOUND = 3.75, MIN_GAP = 0.85, START_X = 1.5;
 const DIFF = [
-  { name: 'Mudah', react: 0.38, block: 0.25, aggr: 0.35, think: 0.32, combo: 0, speed: 0.85, dmgMul: 0.8 },
-  { name: 'Sedang', react: 0.22, block: 0.5, aggr: 0.55, think: 0.2, combo: 0.25, speed: 1, dmgMul: 1 },
-  { name: 'Sulit', react: 0.12, block: 0.72, aggr: 0.75, think: 0.12, combo: 0.55, speed: 1.12, dmgMul: 1.15 },
+  { name: 'Mudah', react: 0.45, block: 0.15, aggr: 0.25, think: 0.42, combo: 0, speed: 0.8, dmgMul: 0.6 },
+  { name: 'Sedang', react: 0.28, block: 0.38, aggr: 0.42, think: 0.28, combo: 0.15, speed: 0.95, dmgMul: 0.85 },
+  { name: 'Sulit', react: 0.15, block: 0.62, aggr: 0.65, think: 0.16, combo: 0.45, speed: 1.08, dmgMul: 1.05 },
 ];
 let diff = DIFF[1], diffIdx = 1;
 function newFighter(isA) {
@@ -654,8 +654,9 @@ function matchOver() {
 
 // ---------- Combat ----------
 function startAttack(F, kind) {
-  if (F.cd > 0 || F.stun > 0) return false;
+  if (F.cd > 0 || F.state === 'hit' || F.state === 'ko') return false;
   if (!(F.state === 'idle' || F.state === 'walk' || F.state === 'block')) return false;
+  if (F.isA) { queued = null; queuedT = 0; }
   F.state = 'atk'; F.atk = ATK[kind]; F.atkKind = kind; F.t = 0; F.hasHit = false; F.cd = 0;
   sfx('swing'); if (Math.random() < 0.7) sfx('kiai', F.isA ? 300 : 210);
   return true;
@@ -675,7 +676,7 @@ function tryHit(F, O) {
     hitstop = 0.04;
   } else {
     const mulD = F.isA ? 1 : diff.dmgMul;
-    O.hp -= a.dmg * mulD; O.state = 'hit'; O.t = 0; O.stun = a.stun; O.kb = F.face * a.kb; O.atk = null; O.flash = 0.12;
+    O.hp -= a.dmg * mulD; O.state = 'hit'; O.t = 0; O.stun = a.stun * (O.isA ? 0.6 : 1); O.kb = F.face * a.kb; O.atk = null; O.flash = 0.12;
     F.pts += a.pts; F.hitsLanded++;
     sfx(a.pts >= 2 ? 'hitBig' : 'hit'); sfx('crowd');
     burst(hx_, hy, [1, 0.95, 0.7], 14, 4); burst(hx_, hy, F.isA ? C.red : C.blue, 8, 3);
@@ -703,14 +704,15 @@ function updateFighter(F, O, inp, dt) {
   F.lag = damp(F.lag, F.hp, F.lag > F.hp ? 2.2 : 20, dt);
   let vx = 0;
   switch (F.state) {
-    case 'hit': if (F.t > F.stun) F.state = 'idle'; break;
+    case 'hit': if (F.t > F.stun) { F.state = 'idle'; F.stun = 0; if (phase === 'fight' && inp.attack) startAttack(F, inp.attack); } break;
     case 'atk': {
       const a = F.atk, tA = a.start, tB = a.start + a.act, tC = tB + a.rec;
       if (!F.hasHit && F.t >= tA && F.t <= tB) tryHit(F, O);
-      if (F.t >= tC) { F.state = 'idle'; F.atk = null; F.cd = 0.08; }
+      if (F.t >= tC) { F.state = 'idle'; F.atk = null; F.cd = F.isA ? 0 : 0.08; if (F.isA && inp.attack && phase === 'fight') startAttack(F, inp.attack); }
+      else if (F.isA && inp.attack && F.t >= tB + a.rec * 0.45 && phase === 'fight') { F.state = 'idle'; F.atk = null; F.cd = 0; startAttack(F, inp.attack); }
       break;
     }
-    case 'block': if (!inp.block) F.state = 'idle'; break;
+    case 'block': if (phase === 'fight' && inp.attack && startAttack(F, inp.attack)) break; if (!inp.block) F.state = 'idle'; break;
     case 'idle': case 'walk':
       if (phase !== 'fight') break;
       if (inp.attack && startAttack(F, inp.attack)) break;
@@ -769,8 +771,9 @@ function aiInput(dt) {
 // ---------- Input (player AKA) ----------
 const keys = {};
 const touch = { L: false, R: false, B: false };
+let blockTap = 0;
 let queued = null, queuedT = 0;
-function queueAttack(k) { queued = k; queuedT = 0.2; }
+function queueAttack(k) { queued = k; queuedT = 0.5; }
 window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase(); if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault();
   if (e.repeat) { keys[k] = true; return; }
@@ -787,13 +790,13 @@ function playerInput() {
   const inp = { move: 0, block: false, attack: null };
   if (keys['a'] || keys['arrowleft'] || touch.L) inp.move -= 1;
   if (keys['d'] || keys['arrowright'] || touch.R) inp.move += 1;
-  inp.block = !!(keys['s'] || keys['arrowdown'] || keys[' '] || touch.B);
+  inp.block = !!(keys['s'] || keys['arrowdown'] || keys[' '] || touch.B || blockTap > 0);
   if (queued) inp.attack = queued;
   return inp;
 }
 function bindHold(id, key) {
   const el = $(id);
-  const on = e => { e.preventDefault(); audioInit(); touch[key] = true; el.classList.add('on'); try { el.setPointerCapture(e.pointerId); } catch (_) {} };
+  const on = e => { e.preventDefault(); audioInit(); touch[key] = true; if (key === 'B') blockTap = 0.4; el.classList.add('on'); try { el.setPointerCapture(e.pointerId); } catch (_) {} };
   const off = () => { touch[key] = false; el.classList.remove('on'); };
   el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
 }
@@ -856,7 +859,8 @@ function step(dtReal) {
   if (slowmo > 0) { slowmo -= dtReal; dt *= 0.3; }
   time += dt;
   if (hitstop > 0) { hitstop -= dtReal; dt = 0; }
-  if (queuedT > 0) { queuedT -= dtReal; if (queuedT <= 0) queued = null; }
+  if (queuedT > 0 && dt > 0) { queuedT -= dt; if (queuedT <= 0) queued = null; }
+  if (blockTap > 0 && dt > 0) blockTap -= dt;
   if (state === 'play' && dt > 0) {
     phaseT += dt;
     if (pendingEnd) { pendingEnd.t -= dt; if (pendingEnd.t <= 0) { const w = pendingEnd.w; pendingEnd = null; endRound(w, 'KO'); } }
@@ -871,7 +875,6 @@ function step(dtReal) {
     const pi = playerInput(), bi = aiInput(dt);
     const beforeA = A.state;
     updateFighter(A, B, pi, dt); updateFighter(B, A, bi, dt);
-    if (pi.attack && A.state === 'atk' && beforeA !== 'atk') { queued = null; queuedT = 0; }
     separate();
   } else if (state === 'menu') {
     // attract mode: two fighters spar slowly
