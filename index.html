@@ -35,6 +35,13 @@
   h1 { margin: 0; font-size: clamp(46px, 13vw, 92px); font-weight: 900; line-height: .9; letter-spacing: 1px;
     transform: rotate(-3deg); text-shadow: 0 5px 0 #ff2e88, 0 9px 0 rgba(0,0,0,.25), 0 0 40px rgba(255,46,136,.55); }
   h1 span { color: #ffd23f; text-shadow: 0 5px 0 #e0571c, 0 9px 0 rgba(0,0,0,.25), 0 0 40px rgba(255,200,60,.5); }
+  .ig { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; padding: 9px 18px 9px 12px; border-radius: 999px;
+    color: #fff; text-decoration: none; font-weight: 900; font-size: 17px;
+    background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5);
+    box-shadow: 0 6px 18px rgba(214,41,118,.45); transition: transform .15s; }
+  .ig:hover { transform: translateY(-2px) scale(1.04); }
+  .ig svg { width: 22px; height: 22px; }
+  footer a { text-decoration: none; }
   .tag { margin-top: 18px; font-weight: 700; opacity: .85; font-size: clamp(14px, 3.8vw, 18px); }
 
   .grid { width: 100%; max-width: 880px; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
@@ -98,6 +105,10 @@
 
   <header>
     <h1>GAME<br><span>SHAFA</span></h1>
+    <a class="ig" href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4.3" fill="none" stroke="#fff" stroke-width="2"/><circle cx="17.6" cy="6.4" r="1.3" fill="#fff"/></svg>
+      @shafaauray
+    </a>
     <div class="tag">Pilih game, langsung main. Bisa di HP, tablet &amp; laptop!</div>
   </header>
 
@@ -130,6 +141,6 @@
     </div>
   </main>
 
-  <footer>dibuat oleh <b>@shafaauray</b></footer>
+  <footer>dibuat oleh <a href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener"><b>@shafaauray</b></a></footer>
 </body>
 </html>
