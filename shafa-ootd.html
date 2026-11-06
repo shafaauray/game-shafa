@@ -71,6 +71,10 @@
   .big { padding: 15px 34px; border-radius: 999px; font-size: clamp(18px, 5vw, 24px); font-weight: 900; min-width: min(320px, 80vw); }
   .small { padding: 10px 22px; border-radius: 999px; font-size: 15px; font-weight: 800; text-decoration: none; color: #fff; display: inline-block; background: rgba(40,22,10,.6); box-shadow: inset 0 0 0 2px rgba(255,220,160,.5); }
   .by { font-weight: 900; font-size: 15px; padding: 6px 14px; border-radius: 999px; text-decoration: none; color: #fff; background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5); box-shadow: 0 4px 14px rgba(214,41,118,.4); }
+  .gp { padding: 9px 18px; border-radius: 18px; font-weight: 900; font-size: 16px; background: rgba(40,22,10,.6); box-shadow: inset 0 0 0 2px rgba(255,220,160,.35); line-height: 1.2; }
+  .gp small { display: block; font-size: 11px; font-weight: 700; opacity: .8; }
+  .gp.on { background: linear-gradient(#ffe2a0, #e0a640); color: #3a2010; box-shadow: 0 4px 0 #8a5a10; }
+  @media (max-height: 520px) { .gp { padding: 6px 12px; font-size: 13px; } }
   .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
   .themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: min(760px, 94vw); }
   .th { border-radius: 20px; padding: 14px; text-align: left; background: rgba(60,32,14,.75); box-shadow: inset 0 0 0 2px rgba(255,210,140,.35), 0 6px 0 rgba(0,0,0,.3); }
@@ -95,6 +99,7 @@
     <button class="ib glass" id="btnHome" title="Menu">🏠</button>
     <div id="themePill" class="glass hidden"></div>
     <div class="spacer" id="spacer"></div>
+    <button class="ib glass" id="btnSwap" title="Ganti karakter">👨🏽</button>
     <button class="ib glass" id="btnRand" title="Acak">🎲</button>
     <button class="ib glass" id="btnZoom" title="Zoom wajah">🔍</button>
     <button class="ib glass" id="btnMute" title="Suara">🔊</button>
@@ -111,8 +116,9 @@
   <div id="flash"></div>
 
   <div id="menu" class="screen dim">
-    <div class="title">SHAFA<br><span>OOTD</span> NUSANTARA<small>KEBAYA · BATIK · RUMAH JOGLO</small></div>
-    <div class="sub">Dandani Shafa pakai kebaya &amp; kain batik motif Jawa, pilih makeup, terus pamer di pendopo joglo! 🌺</div>
+    <div class="title">SHAFA<br><span>OOTD</span> NUSANTARA<small>KEBAYA · BESKAP · JOGLO</small></div>
+    <div class="sub" id="menuSub"></div>
+    <div class="row gpick"><button class="gp" data-g="f">👩🏽 Mbak Shafa<small>Kebaya &amp; Batik</small></button><button class="gp" data-g="m">👨🏽 Mas Shaka<small>Beskap &amp; Blangkon</small></button></div>
     <button class="big gold" id="btnTheme">🎯 Tantangan Tema</button>
     <button class="big soft" id="btnFree">🎨 Bebas Berkreasi</button>
     <div class="row"><a class="small" href="index.html">← Game lain</a></div>
@@ -120,7 +126,7 @@
   </div>
   <div id="themesScreen" class="screen dim hidden">
     <div class="title" style="font-size:clamp(30px,8vw,52px)">PILIH <span>TEMA</span></div>
-    <div class="sub">Dandani Shafa sesuai acaranya. Tiga juri bakal menilai OOTD-mu! ⭐</div>
+    <div class="sub" id="themeSub"></div>
     <div class="themes" id="themeList"></div>
     <button class="small" id="btnThemeBack">← Kembali</button>
   </div>
@@ -395,6 +401,13 @@ function fabric(kind, base, motif, extra) {
 }
 function hairTex() { const cv = newCanvas(256, 512), g = cv.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 512); gr.addColorStop(0, '#1a1412'); gr.addColorStop(1, '#0d0a09'); g.fillStyle = gr; g.fillRect(0, 0, 256, 512);
   R = mulberry(5); for (let i = 0; i < 260; i++) { const x = rr(0, 256); g.strokeStyle = R() < .5 ? `rgba(90,60,45,${rr(.15, .4)})` : `rgba(0,0,0,${rr(.2, .5)})`; g.lineWidth = rr(.6, 2); g.beginPath(); g.moveTo(x, 0); g.bezierCurveTo(x + rr(-6, 6), 170, x + rr(-6, 6), 340, x + rr(-4, 4), 512); g.stroke(); } R = Math.random; return cv; }
+function plainTex(base, hi) { const cv = newCanvas(256, 256), g = cv.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+  R = mulberry(17); g.globalAlpha = .18; g.strokeStyle = hi; g.lineWidth = 1; for (let i = -256; i < 256; i += 4) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 256, 256); g.stroke(); }
+  g.globalAlpha = 1; for (let i = 0; i < 1500; i++) { g.fillStyle = `rgba(${R() < .5 ? '255,255,255' : '0,0,0'},${rr(.02, .06)})`; g.fillRect(rr(0, 256), rr(0, 256), rr(1, 3), 1); } R = Math.random; return cv; }
+function lurikTex([bg, dk, md, lt]) { const cv = newCanvas(512, 512), g = cv.getContext('2d'); g.fillStyle = bg; g.fillRect(0, 0, 512, 512);
+  const band = [[0, 6, dk], [10, 3, lt], [16, 10, dk], [30, 2, md], [36, 2, md], [44, 14, dk], [62, 3, lt], [70, 5, md]];
+  for (let rep = 0; rep < 4; rep++) for (const [x, w, c] of band) { g.fillStyle = c; g.fillRect(rep * 128 + x, 0, w, 512); g.fillRect(rep * 128 + 128 - x - w, 0, w, 512); }
+  R = mulberry(11); for (let i = 0; i < 2600; i++) { g.fillStyle = `rgba(${R() < .5 ? '255,240,210' : '0,0,0'},${rr(.03, .09)})`; g.fillRect(rr(0, 512), rr(0, 512), rr(1, 3), 1); } R = Math.random; return cv; }
 function tegelTex() { const cv = newCanvas(512, 512), g = cv.getContext('2d'); const T_ = 128;
   for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const x = i * T_, y = j * T_;
     g.fillStyle = '#e8dcbf'; g.fillRect(x, y, T_, T_);
@@ -482,13 +495,13 @@ const ACC = {
   gelang: { name: 'Gelang', em: '💛', tags: ['jalan', 'ceria', 'lebaran'] },
 };
 const THEMES = [
-  { id: 'kondangan', name: 'Kondangan Adat Jawa', em: '💍', desc: 'Datang ke resepsi pernikahan adat Solo. Harus anggun & mewah!', want: { kondangan: 1, formal: .6, glam: .6, klasik: .4, sogan: .2 } },
+  { id: 'kondangan', name: 'Kondangan Adat Jawa', em: '💍', desc: 'Datang ke resepsi pernikahan adat Solo. Harus anggun, rapi & mewah!', want: { kondangan: 1, formal: .6, glam: .6, klasik: .4, sogan: .2 } },
   { id: 'kartini', name: 'Hari Kartini', em: '🌸', desc: 'Upacara Hari Kartini di sekolah. Klasik, sopan & bersahaja.', want: { kartini: 1, klasik: .7, putih: .3, elegan: .4, soft: .3 } },
-  { id: 'wisuda', name: 'Wisuda Kampus', em: '🎓', desc: 'Hari wisuda! Modern, manis & fotogenik.', want: { wisuda: 1, modern: .6, soft: .5, elegan: .4, ceria: .2 } },
+  { id: 'wisuda', name: 'Wisuda Kampus', em: '🎓', desc: 'Hari wisuda! Modern, rapi & fotogenik.', want: { wisuda: 1, modern: .6, soft: .5, elegan: .4, ceria: .2 } },
   { id: 'lebaran', name: 'Lebaran & Silaturahmi', em: '🌙', desc: 'Keliling ke rumah saudara. Lembut, ceria & nyaman.', want: { lebaran: 1, soft: .5, ceria: .4, klasik: .3 } },
   { id: 'jalan', name: 'Jalan-jalan Malioboro', em: '🛺', desc: 'Main ke Jogja sore-sore. Santai tapi tetap stylish!', want: { jalan: 1, casual: .7, ceria: .5, batik: .4 } },
 ];
-const CATS = [
+const CATS_F = [
   { id: 'kebaya', name: '👘 Kebaya', title: 'Pilih atasan kebaya / blus batik', list: KEBAYA, w: 30 },
   { id: 'bawahan', name: '🪭 Kain Batik', title: 'Pilih jarik / rok batik motif Jawa', list: BATIK, w: 25 },
   { id: 'makeup', name: '💄 Makeup', title: 'Pilih look makeup', list: MAKEUP, w: 15 },
@@ -496,7 +509,60 @@ const CATS = [
   { id: 'selendang', name: '🧣 Selendang', title: 'Pilih selendang', list: SELENDANG, w: 6 },
   { id: 'aksesoris', name: '💍 Aksesoris', title: 'Pilih aksesoris (bisa lebih dari satu)', list: ACC, w: 7, multi: true },
 ];
-const outfit = { kebaya: 'kartiniPutih', bawahan: 'parang', makeup: 'natural', rambut: 'terurai', selendang: 'none', aksesoris: { anting: true } };
+const outfitF = { kebaya: 'kartiniPutih', bawahan: 'parang', makeup: 'natural', rambut: 'terurai', selendang: 'none', aksesoris: { anting: true } };
+
+// ---------- Male catalogue (Mas Shaka) ----------
+const ATASAN_M = {
+  beskapHitam: { name: 'Beskap Hitam Solo', style: 'beskap', fab: ['velvet', '#17161a', '#3a3640'], trim: '#d9a83a', btn: '#e3b23e', tags: ['formal', 'klasik', 'kondangan', 'elegan', 'glam'], tone: 'dark', info: 'Busana resmi pria Jawa' },
+  beskapPutih: { name: 'Beskap Putih Gading', style: 'beskap', fab: ['velvet', '#f1ece0', '#ffffff'], trim: '#d9a83a', btn: '#e3b23e', tags: ['formal', 'elegan', 'putih', 'kartini', 'wisuda'], tone: 'light', info: 'Bersih & berwibawa' },
+  beskapKrem:  { name: 'Beskap Krem Landung', style: 'beskap', fab: ['velvet', '#d8c39a', '#efe0bd'], trim: '#7a4a1a', btn: '#e3b23e', tags: ['klasik', 'kondangan', 'lebaran', 'soft', 'formal'], tone: 'light' },
+  beskapHijau: { name: 'Beskap Hijau Pupus', style: 'beskap', fab: ['velvet', '#1f4a32', '#d9a83a'], trim: '#d9a83a', btn: '#e3b23e', tags: ['formal', 'glam', 'kondangan', 'lebaran'], tone: 'dark' },
+  beskapNavy:  { name: 'Beskap Navy Modern', style: 'beskap', fab: ['velvet', '#1c2648', '#3a4a78'], trim: '#c8ccd8', btn: '#e8e8f0', tags: ['modern', 'formal', 'wisuda', 'elegan'], tone: 'dark' },
+  surjanLurik: { name: 'Surjan Lurik Jogja', style: 'surjan', lurik: ['#3a2a1e', '#15100c', '#8a6a48', '#c8a878'], trim: '#2a1a10', btn: '#e3b23e', tags: ['klasik', 'kartini', 'jalan', 'batik', 'casual'], tone: 'mid', info: 'Kain lurik lambang kesederhanaan' },
+  surjanBunga: { name: 'Surjan Ontrokusumo', style: 'surjan', fab: ['encim', '#efe2c8', '#9a2a2a', '#2a5a8a'], trim: '#9a2a2a', btn: '#e3b23e', tags: ['ceria', 'lebaran', 'jalan', 'kondangan'], tone: 'light', info: 'Surjan motif bunga keraton' },
+  kemejaBatik: { name: 'Kemeja Batik Parang', style: 'kemeja', batik: 'kmj_parang', trim: '#2a160a', btn: '#f0e6d0', tags: ['casual', 'jalan', 'batik', 'modern', 'wisuda'], tone: 'mid' },
+  kemejaMega:  { name: 'Kemeja Mega Mendung', style: 'kemeja', batik: 'mega', trim: '#0f2050', btn: '#ffffff', tags: ['modern', 'ceria', 'jalan', 'wisuda', 'casual'], tone: 'bright' },
+};
+const BAWAH_M = {
+  parang: BATIK.parang, sidomukti: BATIK.sidomukti, truntum: BATIK.truntum, kawung: BATIK.kawung, parangInd: BATIK.parangInd, sidoMarun: BATIK.sidoMarun,
+  celana: { name: 'Celana Panjang Hitam', shape: 'celana', tags: ['modern', 'casual', 'wisuda', 'jalan'], tone: 'dark', info: 'Simpel & rapi' },
+};
+const WAJAH = {
+  bersih:  { name: 'Klimis Bersih', tags: ['modern', 'wisuda', 'soft', 'casual', 'jalan'] },
+  kumis:   { name: 'Kumis Tipis', kumis: 1, tags: ['klasik', 'formal', 'kondangan', 'kartini'] },
+  jenggot: { name: 'Jenggot Tipis', jenggot: .7, tags: ['lebaran', 'soft', 'jalan', 'elegan'] },
+  brewok:  { name: 'Kumis + Brewok', kumis: 1.25, jenggot: 1, tags: ['glam', 'kondangan', 'klasik', 'lebaran'] },
+};
+const BLANGKON = {
+  none:   { name: 'Tanpa Blangkon', tags: ['casual', 'jalan', 'modern', 'wisuda'] },
+  solo:   { name: 'Blangkon Solo', style: 'solo', tex: 'blk_solo', tags: ['klasik', 'formal', 'kondangan', 'elegan'], info: 'Trepes, tanpa mondolan' },
+  jogja:  { name: 'Blangkon Jogja', style: 'jogja', tex: 'blk_jogja', tags: ['klasik', 'formal', 'kartini', 'kondangan'], info: 'Pakai mondolan di belakang' },
+  kawung: { name: 'Blangkon Kawung', style: 'solo', tex: 'blk_kawung', tags: ['batik', 'jalan', 'lebaran', 'kartini', 'ceria'] },
+};
+const KERIS = {
+  none:    { name: 'Tanpa Keris', tags: ['casual', 'jalan', 'modern', 'wisuda'] },
+  ladrang: { name: 'Keris Ladrang', style: 'ladrang', pendok: '#d9a83a', tags: ['formal', 'kondangan', 'glam', 'klasik'], info: 'Warangka resmi untuk upacara' },
+  gayaman: { name: 'Keris Gayaman', style: 'gayaman', pendok: '#a86a3a', tags: ['klasik', 'kartini', 'lebaran', 'elegan'], info: 'Warangka untuk sehari-hari' },
+};
+const ACC_M = {
+  timang: { name: 'Sabuk Timang Emas', em: '⚜️', tags: ['formal', 'kondangan', 'klasik'] },
+  rantai: { name: 'Rantai Arloji Saku', em: '⛓️', tags: ['klasik', 'elegan', 'kartini'] },
+  melati: { name: 'Kalung Ronce Melati', em: '🤍', tags: ['kondangan', 'glam'] },
+  jam:    { name: 'Jam Tangan', em: '⌚', tags: ['modern', 'wisuda', 'jalan', 'casual'] },
+};
+const CATS_M = [
+  { id: 'atasan', name: '🥋 Beskap', title: 'Pilih beskap / surjan / kemeja batik', list: ATASAN_M, w: 30 },
+  { id: 'bawahan', name: '🪭 Kain', title: 'Pilih jarik batik atau celana', list: BAWAH_M, w: 22 },
+  { id: 'blangkon', name: '🎩 Blangkon', title: 'Pilih blangkon (iket kepala Jawa)', list: BLANGKON, w: 15 },
+  { id: 'keris', name: '🗡️ Keris', title: 'Pilih keris (diselipkan di pinggang belakang)', list: KERIS, w: 13 },
+  { id: 'wajah', name: '🧔🏽 Wajah', title: 'Pilih gaya kumis & jenggot', list: WAJAH, w: 8 },
+  { id: 'aksesoris', name: '⚜️ Aksesoris', title: 'Pilih aksesoris (bisa lebih dari satu)', list: ACC_M, w: 7, multi: true },
+];
+const outfitM = { atasan: 'beskapKrem', bawahan: 'parang', blangkon: 'solo', keris: 'none', wajah: 'bersih', aksesoris: {} };
+const NAMES = { f: 'Mbak Shafa', m: 'Mas Shaka' };
+let gender = load('ooGender') === 'm' ? 'm' : 'f';
+let outfit = gender === 'm' ? outfitM : outfitF, CATS = gender === 'm' ? CATS_M : CATS_F;
+const topList = () => CATS[0].list[outfit[CATS[0].id]], botList = () => CATS[1].list[outfit.bawahan];
 
 // texture canvases (painted once) + GL textures (lazy)
 const TEXC = {}, TEXG = {};
@@ -514,6 +580,12 @@ function texCanvas(key) {
   else if (key === 'batikSel') cv = batik('parang', { bg: '#6a3a1a', fg: '#f0d8a8', ac: '#2a1608' });
   else if (key === 'pinkSel') cv = fabric('velvet', '#f6b6c8', '#ffffff');
   else if (key === 'putihSel') cv = fabric('lace', '#f8f4ee', '#ffffff');
+  else if (key.startsWith('am_')) { const a = ATASAN_M[key.slice(3)]; cv = a.lurik ? lurikTex(a.lurik) : a.batik ? texCanvas(a.batik) : a.style === 'beskap' ? plainTex(a.fab[1], a.fab[2]) : fabric(a.fab[0], a.fab[1], a.fab[2], a.fab[3]); }
+  else if (key === 'kmj_parang') cv = batik('parang', { bg: '#7a3a1a', fg: '#f0d090', ac: '#2a160a' });
+  else if (key === 'celana') cv = plainTex('#1c1a1c', '#3a383c');
+  else if (key === 'blk_solo') cv = batik('parang', { bg: '#2a1a10', fg: '#b8884a', ac: '#e8d4a8' });
+  else if (key === 'blk_jogja') cv = batik('truntum', { bg: '#1e1610', fg: '#d8c49a', ac: '#c9952e' });
+  else if (key === 'blk_kawung') cv = batik('kawung', { bg: '#5a3418', fg: '#e8c890', ac: '#2a160a' });
   else if (key === 'hair') cv = hairTex();
   else if (key === 'tegel') cv = tegelTex();
   else if (key === 'gebyok') cv = gebyokTex();
@@ -569,7 +641,49 @@ function paintFace(mk, closed, cv) {
   g.restore();
 }
 function hexA(h, a) { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
-function refreshFace() { const mk = MAKEUP[outfit.makeup]; paintFace(mk, false, faceCv[0]); paintFace(mk, true, faceCv[1]);
+function paintFaceM(w, closed, cv) {
+  const g = cv.getContext('2d'), cx = 256, ey = 268, ex = 45;
+  g.fillStyle = SKIN; g.fillRect(0, 0, 1024, 512);
+  g.save(); g.translate(0, ey); g.scale(1, .8); g.translate(0, -ey);
+  const sh = g.createRadialGradient(cx, 270, 40, cx, 270, 200); sh.addColorStop(0, 'rgba(255,220,190,.08)'); sh.addColorStop(1, 'rgba(70,35,15,.16)'); g.fillStyle = sh; g.fillRect(0, 0, 1024, 512);
+  // jaw / stubble shadow
+  const ly = ey + 62;
+  if (w.jenggot) { R = mulberry(21); const a = .32 * w.jenggot;
+    const jg = g.createRadialGradient(cx, ly + 30, 20, cx, ly + 20, 120); jg.addColorStop(0, `rgba(25,14,8,${a})`); jg.addColorStop(.75, `rgba(25,14,8,${a * .8})`); jg.addColorStop(1, 'rgba(25,14,8,0)');
+    g.fillStyle = jg; g.beginPath(); g.moveTo(cx - 120, ey + 10); g.quadraticCurveTo(cx - 110, ly + 70, cx, ly + 90); g.quadraticCurveTo(cx + 110, ly + 70, cx + 120, ey + 10); g.lineTo(cx + 92, ey + 30); g.quadraticCurveTo(cx + 70, ly + 6, cx + 34, ly + 4); g.lineTo(cx - 34, ly + 4); g.quadraticCurveTo(cx - 70, ly + 6, cx - 92, ey + 30); g.closePath(); g.fill();
+    g.fillStyle = 'rgba(20,10,6,.5)'; for (let i = 0; i < 700 * w.jenggot; i++) { const t = R() * 2 - 1, x = cx + t * 105, y = lerp(ly + 6, ly + 80 - Math.abs(t) * 40, R()) - (Math.abs(t) > .7 ? (Math.abs(t) - .7) * 200 * R() : 0); g.fillRect(x, y, 1.6, 2.6); } R = Math.random; }
+  // brows: thick & straight
+  g.fillStyle = '#1c100a';
+  for (const s of [-1, 1]) { g.beginPath(); g.moveTo(cx + s * 20, ey - 24); g.quadraticCurveTo(cx + s * 46, ey - 36, cx + s * 74, ey - 29); g.lineTo(cx + s * 73, ey - 23); g.quadraticCurveTo(cx + s * 46, ey - 28, cx + s * 21, ey - 16); g.closePath(); g.fill(); }
+  // eyes
+  for (const s of [-1, 1]) {
+    const x = cx + s * ex, inner = x - s * 18, outer = x + s * 18;
+    if (closed) { g.strokeStyle = '#1a0e0a'; g.lineWidth = 3.5; g.beginPath(); g.moveTo(inner, ey); g.quadraticCurveTo(x, ey + 7, outer, ey - 1); g.stroke(); continue; }
+    g.save(); g.beginPath(); g.moveTo(inner, ey + 2); g.quadraticCurveTo(x - s * 2, ey - 14, outer, ey - 2); g.quadraticCurveTo(x, ey + 10, inner, ey + 2); g.closePath();
+    g.fillStyle = '#f4ebe0'; g.fill(); g.clip();
+    const ir = g.createRadialGradient(x, ey - 3, 2, x, ey - 2, 12); ir.addColorStop(0, '#5a3820'); ir.addColorStop(1, '#22120a'); g.fillStyle = ir; g.beginPath(); g.arc(x, ey - 2, 9, 0, TAU); g.fill();
+    g.fillStyle = '#0a0604'; g.beginPath(); g.arc(x, ey - 2, 4, 0, TAU); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(x + 3, ey - 5, 2.2, 0, TAU); g.fill();
+    g.restore();
+    g.strokeStyle = '#140a06'; g.lineWidth = 3; g.beginPath(); g.moveTo(inner, ey + 2); g.quadraticCurveTo(x - s * 2, ey - 14, outer, ey - 2); g.stroke();
+  }
+  // nose (a bit broader)
+  g.strokeStyle = 'rgba(90,45,25,.45)'; g.lineWidth = 2.4; g.beginPath(); g.moveTo(cx - 6, ey + 14); g.quadraticCurveTo(cx - 10, ey + 30, cx - 8, ey + 38); g.stroke();
+  g.fillStyle = 'rgba(80,35,20,.5)'; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 9, ey + 42, 5, 2.6, s * .3, 0, TAU); g.fill(); }
+  g.fillStyle = 'rgba(255,230,200,.1)'; g.beginPath(); g.ellipse(cx + 2, ey + 22, 5, 14, 0, 0, TAU); g.fill();
+  // lips (muted)
+  g.fillStyle = '#8a4e40';
+  g.beginPath(); g.moveTo(cx - 28, ly); g.quadraticCurveTo(cx - 14, ly - 9, cx, ly - 6); g.quadraticCurveTo(cx + 14, ly - 9, cx + 28, ly); g.quadraticCurveTo(cx, ly + 2, cx - 28, ly); g.fill();
+  g.fillStyle = '#9a5a4a'; g.beginPath(); g.moveTo(cx - 27, ly + 1); g.quadraticCurveTo(cx, ly + 3, cx + 27, ly + 1); g.quadraticCurveTo(cx + 15, ly + 16, cx, ly + 16); g.quadraticCurveTo(cx - 15, ly + 16, cx - 27, ly + 1); g.fill();
+  g.strokeStyle = 'rgba(40,10,10,.6)'; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - 26, ly + 1); g.quadraticCurveTo(cx, ly + 4, cx + 26, ly + 1); g.stroke();
+  // mustache
+  if (w.kumis) { const k = w.kumis; g.fillStyle = '#160c08';
+    g.beginPath(); g.moveTo(cx, ly - 13); g.quadraticCurveTo(cx - 20, ly - 20 - 3 * k, cx - 36 - 6 * k, ly - 2 + 4 * k); g.quadraticCurveTo(cx - 22, ly - 9, cx, ly - 7);
+    g.quadraticCurveTo(cx + 22, ly - 9, cx + 36 + 6 * k, ly - 2 + 4 * k); g.quadraticCurveTo(cx + 20, ly - 20 - 3 * k, cx, ly - 13); g.fill();
+    g.strokeStyle = 'rgba(80,50,30,.5)'; g.lineWidth = 1; for (let i = -8; i <= 8; i++) { g.beginPath(); g.moveTo(cx + i * 4, ly - 15 + Math.abs(i) * .4); g.lineTo(cx + i * 4.6, ly - 8); g.stroke(); } }
+  g.restore();
+}
+function refreshFace() { const mk = gender === 'm' ? WAJAH[outfit.wajah] : MAKEUP[outfit.makeup], pf = gender === 'm' ? paintFaceM : paintFace; pf(mk, false, faceCv[0]); pf(mk, true, faceCv[1]);
   for (let i = 0; i < 2; i++) { if (!faceTex[i]) faceTex[i] = glTex(faceCv[i], false); else { gl.bindTexture(gl.TEXTURE_2D, faceTex[i]); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, faceCv[i]); } } }
 
 // ---------- Character geometry ----------
@@ -589,6 +703,7 @@ const TOR_SX = 1.1, TOR_SZ = .78;
 let CH = null; // built character parts
 function buildCharacter() {
   if (CH) for (const p of CH.parts) freeMesh(p.mesh);
+  if (gender === 'm') return buildMale();
   const parts = [], add = (mesh, texKey, bone, o = {}) => parts.push(Object.assign({ mesh, tex: texKey, bone, spec: 0, sway: 0 }, o));
   const K = KEBAYA[outfit.kebaya], B = BATIK[outfit.bawahan], acc = outfit.aksesoris, hair = outfit.rambut;
   const white = [1, 1, 1];
@@ -686,6 +801,123 @@ function buildCharacter() {
   CH = { parts };
 }
 
+// ---------- Male character ----------
+const KAIN_M = [[1.03, .17], [.97, .178], [.9, .186], [.7, .18], [.45, .168], [.2, .158], [.05, .154]];
+const KM_SX = 1.08, KM_SZ = .76, TM_SX = 1.08, TM_SZ = .74;
+function torsoM(style) {
+  const top = [[1.425, .058], [1.405, .066], [1.385, .075], [1.365, .15], [1.34, .2], [1.28, .212], [1.2, .205], [1.12, .195], [1.05, .192]];
+  if (style === 'surjan') return top.concat([[1.0, .178], [.96, .172]]);
+  if (style === 'kemeja') return top.concat([[.98, .192], [.9, .205], [.86, .208]]);
+  return top.concat([[1.0, .2], [.95, .21], [.88, .22]]); // beskap: flared back tail
+}
+function buildMale() {
+  const parts = [], add = (mesh, texKey, bone, o = {}) => parts.push(Object.assign({ mesh, tex: texKey, bone, spec: 0, sway: 0 }, o));
+  const A = ATASAN_M[outfit.atasan], B = BAWAH_M[outfit.bawahan], acc = outfit.aksesoris, BL = BLANGKON[outfit.blangkon], KR = KERIS[outfit.keris];
+  const white = [1, 1, 1], gold = hx('#e3b23e'), aKey = 'am_' + outfit.atasan;
+  const tp = torsoM(A.style);
+  const surf = (x, y, off = 0) => { const r = kainR(tp, y), rx = r * TM_SX; return Math.sqrt(Math.max(0, 1 - (x / rx) ** 2)) * r * TM_SZ + off; };
+  // --- bottom ---
+  let g = new Geo();
+  if (B.shape === 'celana') {
+    g.lathe(I, [[1.04, .168], [.96, .174], [.86, .16]], 32, white, 0, { sx: KM_SX, sz: KM_SZ, uRep: 3, vRep: 2, vAbs: true });
+    for (const s of [-1, 1]) g.lathe(T(s * .078, 0, 0), [[.9, .086], [.7, .076], [.4, .066], [.07, .06], [.05, .061]], 16, white, 0, { uRep: 1, vRep: 2, vAbs: true });
+    add(g.build(), 'celana', 'root', { spec: .2 });
+  } else {
+    g.lathe(I, KAIN_M, 40, white, 0, { sx: KM_SX, sz: KM_SZ, uRep: 3, vRep: 2.2, vAbs: true });
+    for (let k = 0; k < 7; k++) { const a = Math.PI / 2 + .26 - k * .07, pr = KAIN_M.map(([y, r]) => [y, r + .004 + (k % 2) * .006]); // wiru on the front-left
+      g.lathe(I, pr.slice(1), 1, shade(white, k % 2 ? 1 : .86), 0, { sx: KM_SX, sz: KM_SZ, a0: a - .05, a1: a + .05, uRep: .05, vRep: 2.2, vAbs: true }); }
+    add(g.build(), outfit.bawahan, 'root', { spec: .15 });
+  }
+  // selop
+  g = new Geo(); for (const s of [-1, 1]) { g.box(T(s * .075, .025, .085, .09, .05, .22), hx('#1e1410'), .05); g.box(T(s * .075, .052, .02, .085, .03, .1), SKINc); g.box(T(s * .075, .052, .16, .08, .012, .06), hx('#c99a3a'), .1); }
+  add(g.build(), null, 'root', { spec: .5 });
+  // stagen + sabuk
+  if (A.style !== 'kemeja') { g = new Geo(); g.lathe(I, [[1.045, .178], [.95, .18]], 32, hx(B.shape === 'celana' ? '#2a1a12' : '#5a2a18'), 0, { sx: TM_SX, sz: TM_SZ });
+    g.lathe(I, [[1.03, .182], [1.0, .183]], 32, hx('#7a1a1a'), 0, { sx: TM_SX, sz: TM_SZ });
+    add(g.build(), null, 'root', { spec: .3 }); }
+  // --- torso ---
+  const cut = A.style === 'beskap' ? (p => p[2] > 0 && p[1] < .88 + .16 * clamp(p[2] / (.19 * TM_SZ), 0, 1)) : null;
+  g = new Geo(); g.lathe(I, tp, 44, white, 0, { sx: TM_SX, sz: TM_SZ, uRep: 4, vRep: 2.4, vAbs: true, skip: cut });
+  // stand collar
+  g.lathe(I, [[1.43, .064], [1.37, .068]], 24, white, 0, { sx: 1.05, sz: 1, uRep: 1, vRep: .3, vAbs: true });
+  add(g.build(), aKey, 'torso', { spec: A.lurik ? .1 : .3 });
+  // trims & buttons
+  g = new Geo(); const tc = hx(A.trim), bc = hx(A.btn);
+  g.lathe(I, [[1.433, .066], [1.425, .066]], 24, tc, .05, { sx: 1.05, sz: 1 });
+  if (A.style === 'beskap') {
+    const line = []; for (let t = 0; t <= 1.0001; t += .05) { const y = lerp(1.37, 1.06, t), x = -lerp(0, .12, Math.min(1, t * 1.25)); line.push([x, y]); }
+    g.ribbon(I, line.map(([x, y]) => ({ p: [x, y, surf(x, y, .005)], s: [.008, 0, 0] })), tc, .1, 1);
+    for (let k = 0; k < 6; k++) { const t = .08 + k * .15, y = lerp(1.37, 1.06, t), x = -lerp(0, .12, Math.min(1, t * 1.25)) + .018; g.ell(I, x, y, surf(x, y, .01), .009, .009, .006, bc, .3, 8); }
+    // front hem trim along the cutaway
+    const hem = []; for (let a = .12; a <= Math.PI - .12; a += .08) { const z0 = Math.sin(a), y = .88 + .16 * clamp(z0 * .98, 0, 1), r = kainR(tp, y); hem.push({ p: [Math.cos(a) * r * TM_SX * 1.01, y + .005, z0 * r * TM_SZ * 1.01], s: [0, .006, 0] }); }
+    g.ribbon(I, hem, tc, .1, 1);
+  } else {
+    const yb = A.style === 'surjan' ? 1.0 : .87;
+    g.ribbon(I, [{ p: [0, 1.37, surf(0, 1.37, .004)], s: [.014, 0, 0] }, ...Array.from({ length: 12 }, (_, i) => { const y = lerp(1.34, yb, i / 11); return { p: [0, y, surf(0, y, .004)], s: [.014, 0, 0] }; })], tc, 0, 1);
+    for (let k = 0; k < (A.style === 'surjan' ? 6 : 5); k++) { const y = lerp(1.35, yb + .04, k / (A.style === 'surjan' ? 5 : 4)); g.ell(I, 0, y, surf(0, y, .009), .008, .008, .005, bc, .3, 8); }
+    if (A.style === 'kemeja') for (const s of [-1, 1]) g.quad(I, [s * .012, 1.43, .07], [s * .075, 1.39, .06], [s * .05, 1.35, .1], [s * .006, 1.38, .085], tc, 0);
+    if (A.style === 'surjan') for (const s of [-1, 1]) { const x = s * .1, y = 1.24; g.box(T(x, y, surf(x, y, .002), .06, .045, .004, -s * .5), tc, 0); }
+  }
+  add(g.build(), null, 'torso', { spec: .55 });
+  // neck
+  g = new Geo(); g.cyl(I, 0, 1.36, 1.5, 0, .05, .048, SKINc, 0, 14); add(g.build(), null, 'torso');
+  // --- arms ---
+  g = new Geo(); g.lathe(I, [[.045, .03], [.02, .06], [-.06, .059], [-.2, .055], [-.28, .051]], 16, white, 0, { uRep: 1, vRep: .6, vAbs: true }); const upper = g.build();
+  g = new Geo(); g.lathe(I, [[.02, .054], [-.08, .05], [-.18, .047], [-.235, .046]], 16, white, 0, { uRep: 1, vRep: .6, vAbs: true });
+  g.lathe(I, [[-.215, .048], [-.237, .048]], 16, tc, .05); const fore = g.build();
+  g = new Geo(); g.ell(I, 0, -.052, 0, .032, .054, .022, SKINc, 0, 12); g.ell(I, .022, -.03, .007, .011, .026, .011, SKINc, 0, 8); g.cyl(I, 0, -.01, .02, 0, .03, .03, SKINc, 0, 10); const hand = g.build();
+  for (const side of [-1, 1]) { add(upper, aKey, side < 0 ? 'upR' : 'upL', { spec: .2, shared: true }); add(fore, aKey, side < 0 ? 'foR' : 'foL', { spec: .2, shared: true }); add(hand, null, side < 0 ? 'haR' : 'haL', { shared: true, spec: .2 }); }
+  if (acc.jam) { g = new Geo(); g.cyl(I, 0, .0, .018, 0, .034, .034, hx('#2a1a12'), 0, 14); g.cyl(T(0, .009, .03, 1, 1, 1, 0, Math.PI / 2), 0, -.006, .006, 0, .016, .016, hx('#d8d8e0'), .2, 14); add(g.build(), null, 'haL', { spec: .9 }); }
+  // --- head ---
+  g = new Geo(); g.ell(I, 0, HEAD_Y, 0, HEAD_R[0] * 1.03, HEAD_R[1], HEAD_R[2], [1, 1, 1], 0, 28); add(g.build(), 'face', 'head', { spec: .12 });
+  g = new Geo(); for (const s of [-1, 1]) g.ell(I, s * .109, HEAD_Y - .005, -.005, .019, .031, .02, SKINc, 0, 8); add(g.build(), null, 'head');
+  // short hair
+  const cap = [HEAD_R[0] * 1.03 + .009, HEAD_R[1] + .008, HEAD_R[2] + .01];
+  const hairSkip = p => { const dx = p[0] / cap[0], dy = p[1] / cap[1], dz = p[2] / cap[2]; if (dy < -.5) return true; if (dz > -.1) { return dy < -.45 + .92 * Math.max(0, dz) + .05 * Math.abs(dx); } return false; };
+  if (!BL.style) {
+  g = new Geo(); g.ell(T(0, HEAD_Y + .006, -.006), 0, 0, 0, cap[0], cap[1], cap[2], [1, 1, 1], 0, 30, { skip: hairSkip });
+  add(g.build(), 'hair', 'head', { spec: .5 }); }
+  // --- blangkon ---
+  if (BL.style) {
+    const br = [HEAD_R[0] * 1.03 + .022, HEAD_R[1] + .02, HEAD_R[2] + .024], cy = HEAD_Y + .008, cz = -.008;
+    const edge = dz => -.64 + .92 * (dz + 1) / 2;
+    g = new Geo(); g.ell(T(0, cy, cz), 0, 0, 0, br[0], br[1], br[2], white, 0, 34, { uRep: 3, vRep: 1.6, skip: p => p[1] / br[1] < edge(p[2] / br[2]) });
+    // wiru band along the lower edge
+    const band = []; for (let j = 0; j <= 48; j++) { const f = j / 48 * TAU; let th = 1.6; for (let it = 0; it < 6; it++) th = Math.acos(clamp(edge(Math.sin(f) * Math.sin(th)), -1, 1));
+      const P = th2 => [Math.cos(f) * Math.sin(th2) * br[0] * 1.02, cy + Math.cos(th2) * br[1] * 1.02, cz + Math.sin(f) * Math.sin(th2) * br[2] * 1.02];
+      const p0 = P(th - .02), p1 = P(th - .2); band.push({ p: p0.map((v, i) => (v + p1[i]) / 2), s: p0.map((v, i) => (v - p1[i]) / 2) }); }
+    g.ribbon(I, band, shade(white, .7), 0, 2);
+    if (BL.style === 'jogja') g.ell(I, 0, HEAD_Y - .055, -.145, .06, .052, .05, shade(white, .9), 0, 16, { uRep: 1.5, vRep: .8 });
+    // kuncungan tails at the back
+    for (const s of [-1, 1]) g.quad(I, [s * .01, HEAD_Y - .045, -.15], [s * .045, HEAD_Y - .05, -.142], [s * .062, HEAD_Y - .13, -.12], [s * .03, HEAD_Y - .13, -.126], shade(white, .8), 0);
+    add(g.build(), BL.tex, 'head', { spec: .3 });
+  }
+  // --- keris at the back of the waist ---
+  if (KR.style) {
+    const zb = -(kainR(tp, 1.0) * TM_SZ) - .03, wood = hx('#5a3018'), wood2 = hx('#3a1e0e'), pd = hx(KR.pendok);
+    g = new Geo();
+    g.box(T(.025, .86, zb, .034, .36, .022, 0, 0, .365), wood, .02);
+    g.box(T(.045, .8, zb - .004, .038, .24, .024, 0, 0, .365), pd, .12);
+    if (KR.style === 'ladrang') { for (let k = 0; k <= 10; k++) { const x = lerp(-.16, .08, k / 10), y = 1.05 + 2.4 * (x + .04) ** 2, sl = 4.8 * (x + .04); g.box(T(x, y, zb, .028, .036 - Math.abs(x + .04) * .06, .03, 0, 0, Math.atan(sl)), wood, .05); } }
+    else { g.ell(I, -.035, 1.055, zb, .08, .03, .02, wood, .05, 14); g.ell(I, .03, 1.065, zb, .03, .022, .02, wood, .05, 10); }
+    const hm = T(-.05, 1.075, zb - .002, 1, 1, 1, 0, 0, .3);
+    g.cyl(hm, 0, -.006, .01, 0, .019, .019, pd, .2, 12);
+    g.cyl(hm, 0, .01, .07, 0, .012, .016, wood2, 0, 10); g.ell(hm, -.006, .082, 0, .018, .022, .016, wood2, 0, 10);
+    add(g.build(), null, 'torso', { spec: .7 });
+  }
+  // --- accessories ---
+  g = new Geo();
+  if (acc.timang && A.style !== 'kemeja') { const z = .183 * TM_SZ + .006; g.ell(I, 0, 1.015, z, .045, .028, .01, gold, .3, 14); g.ell(I, 0, 1.015, z + .008, .02, .013, .006, hx('#b0202a'), .4, 10);
+    for (const s of [-1, 1]) g.ell(I, s * .032, 1.015, z + .006, .007, .007, .005, hx('#ffffff'), .5, 6); }
+  if (acc.rantai) { const p0 = [-.055, 1.2], p1 = [.11, 1.13]; for (let k = 0; k <= 18; k++) { const t = k / 18, x = lerp(p0[0], p1[0], t), y = lerp(p0[1], p1[1], t) - Math.sin(Math.PI * t) * .05; g.ell(I, x, y, surf(x, y, .011), .0045, .0045, .004, gold, .4, 6); }
+    g.ell(I, .11, 1.125, surf(.11, 1.125, .012), .014, .014, .006, gold, .4, 10); }
+  if (acc.melati) { for (let k = 0; k <= 28; k++) { const t = k / 28, a = Math.PI * (.08 + .84 * t), x = Math.cos(a) * .13, y = 1.39 - Math.sin(Math.PI * t) * .24; g.ell(I, x, y, surf(x, Math.max(y, 1.06), .018), .013, .015, .012, hx('#fbfbf2'), .15, 8); }
+    for (const s of [-1, 1]) for (let k = 0; k < 10; k++) { const x = s * .05, y = 1.16 - k * .028; g.ell(I, x, y, surf(x, y, .02), .011, .013, .01, hx('#fbfbf2'), .15, 6); }
+    g.ell(I, 0, 1.15, surf(0, 1.15, .024), .02, .02, .012, hx('#d84a6a'), .2, 10); }
+  if (g.a.length) add(g.build(), null, 'torso', { spec: .9 });
+  CH = { parts };
+}
+
 // ---------- Joglo environment ----------
 let ENV = [];
 function buildEnv() {
@@ -778,14 +1010,53 @@ function sfx(n) { if (!AU.ctx || AU.ctx.state !== 'running') return; const now =
     case 'star': bell(PELOG[5] * 2, .6, .09); break;
     case 'win': [0, 2, 4, 5, 7].forEach((k, i) => bell(PELOG[k] * 2, .7, .08, now + i * .12)); gong(now + .7, .35, AU.sfx); break;
   } } catch (e) {} }
-const BAL = [4, 5, 7, 5, 4, 2, 4, 0, 2, 4, 5, 4, 2, 0, 2, 4];
-function scheduleStep(i, t) { const s = i % 16, bar = Math.floor(i / 16), M = AU.music;
-  if (s % 2 === 0) bell(PELOG[BAL[(s + bar * 4) % 16]], .9, .05, t, M);
-  if (s % 4 === 2) bell(PELOG[BAL[(s + bar * 4 + 3) % 16]] * 2, .4, .025, t, M);
-  if (s === 0 && bar % 2 === 0) gong(t, .25, M);
-  if (s === 8) bell(PELOG[0] / 2, 1.6, .06, t, M);
-  if (s % 4 === 0 || s === 6 || s === 14) { noise(.08, .05, 'lowpass', 400, t, M); } }
-setInterval(() => { if (!AU.ctx || !AU.on || AU.ctx.state !== 'running') return; while (AU.next < AU.ctx.currentTime + .15) { scheduleStep(AU.step, AU.next); AU.next += 60 / 84 / 2; AU.step++; } }, 30);
+// --- Gamelan: 16-beat gongan, 4 steps per beat (lancaran-ish irama) ---
+const GONGAN = [[2, 1, 2, 0, 2, 1, 2, 4, 5, 4, 2, 1, 4, 2, 1, 0], [4, 5, 7, 5, 4, 2, 1, 2, 4, 2, 1, 0, 2, 1, 2, 0], [1, 2, 4, 5, 4, 2, 4, 5, 7, 5, 4, 2, 4, 2, 1, 0]];
+const KENDANG = 'D..t.tD.D..t.Dt.';
+// sinden phrases: [pelog index, beats, vowel]; enters at beat 4, resolves on the gong tone
+const SINDEN = [[[4, 1.5, 'o'], [5, .5, 'o'], [4, 1, 'a'], [2, 2, 'a'], [1, 1, 'e'], [2, .5, 'e'], [1, .5, 'o'], [0, 4.5, 'o']],
+  [[7, 1, 'a'], [5, 1, 'a'], [4, 1.5, 'e'], [5, .5, 'e'], [4, 2, 'o'], [2, 1, 'o'], [1, 1, 'a'], [0, 4.5, 'a']]];
+const VOW = { a: [800, 1200], o: [520, 880], e: [480, 1900], i: [320, 2300], u: [350, 760] };
+const MSTEP = 60 / 64 / 4;
+function kendang(t, k, M) { const c = AU.ctx;
+  if (k === 'D') { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(70, t + .18);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.16, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + .3); o.connect(g); g.connect(M); o.start(t); o.stop(t + .32); noise(.05, .05, 'lowpass', 700, t, M); }
+  else { noise(.05, .09, 'bandpass', 1900, t, M); const o = c.createOscillator(), g = c.createGain(); o.frequency.value = 340; g.gain.setValueAtTime(.06, t); g.gain.exponentialRampToValueAtTime(.0001, t + .06); o.connect(g); g.connect(M); o.start(t); o.stop(t + .08); } }
+function sing(t0, phrase, M) { const c = AU.ctx, beat = MSTEP * 4;
+  const o = c.createOscillator(), o2 = c.createOscillator(); o.type = 'sawtooth'; o2.type = 'triangle';
+  const vib = c.createOscillator(), vg = c.createGain(); vib.frequency.value = 5.3; vib.connect(vg); vg.connect(o.frequency); vg.connect(o2.frequency);
+  const src = c.createGain(); o.connect(src); o2.connect(src); src.gain.value = .5;
+  const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200; src.connect(lp);
+  const f1 = c.createBiquadFilter(), f2 = c.createBiquadFilter(); f1.type = f2.type = 'bandpass'; f1.Q.value = 6; f2.Q.value = 9;
+  const g1 = c.createGain(), g2 = c.createGain(); g1.gain.value = 1; g2.gain.value = .55; lp.connect(f1); lp.connect(f2); f1.connect(g1); f2.connect(g2);
+  const out = c.createGain(); g1.connect(out); g2.connect(out); out.connect(M);
+  // a touch of breath
+  let t = t0; out.gain.setValueAtTime(.0001, t);
+  for (let n = 0; n < phrase.length; n++) { const [pi, b, v] = phrase[n], f = PELOG[pi], d = b * beat;
+    if (n === 0) { o.frequency.setValueAtTime(f * .94, t); o2.frequency.setValueAtTime(f * .94, t); }
+    o.frequency.setTargetAtTime(f, t, .07); o2.frequency.setTargetAtTime(f, t, .07); // luk / glide into each note
+    vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * .022, t + Math.min(d, .9));
+    const [a, e] = VOW[v]; f1.frequency.setTargetAtTime(a, t, .08); f2.frequency.setTargetAtTime(e, t, .08);
+    out.gain.setTargetAtTime(n === 0 ? .2 : .17, t, .09); if (b >= 1) out.gain.setTargetAtTime(.13, t + d * .6, .25);
+    t += d; }
+  out.gain.setTargetAtTime(.0001, t - .4, .35);
+  for (const x of [o, o2, vib]) { x.start(t0); x.stop(t + 1.2); } }
+function suling(t0, M) { const c = AU.ctx, beat = MSTEP * 4, notes = [[5, .5], [7, .5], [5, 1], [4, .5], [5, .5], [4, 1], [2, 2], [4, .5], [2, .5], [1, 3]];
+  const o = c.createOscillator(), g = c.createGain(), vib = c.createOscillator(), vg = c.createGain(); o.type = 'sine'; vib.frequency.value = 5; vg.gain.value = 5; vib.connect(vg); vg.connect(o.frequency); o.connect(g); g.connect(M);
+  let t = t0; g.gain.setValueAtTime(.0001, t);
+  for (const [pi, b] of notes) { o.frequency.setTargetAtTime(PELOG[pi] * 2, t, .03); g.gain.setTargetAtTime(.045, t, .04); noise(b * beat * .6, .012, 'bandpass', PELOG[pi] * 4, t, M); t += b * beat; }
+  g.gain.setTargetAtTime(.0001, t - .3, .2); o.start(t0); o.stop(t + 1); vib.start(t0); vib.stop(t + 1); }
+function scheduleStep(i, t) { const M = AU.music, s = i % 4, beat = Math.floor(i / 4) % 16, gi = Math.floor(i / 64), bal = GONGAN[gi % GONGAN.length], nb = (beat + 1) % 16;
+  const note = PELOG[bal[beat]], next = PELOG[bal[nb]];
+  if (s === 0) { bell(note, 1.3, .055, t, M); bell(note / 2, 1.8, .03, t, M); // saron + slenthem
+    if ((beat + 1) % 4 === 0) bell(note, 2.4, .045, t, M);                      // kenong
+    if (beat === 5 || beat === 9 || beat === 13) bell(note / 2, 2.6, .05, t, M); // kempul
+    if (beat === 15) gong(t, .3, M); }                                         // gong ageng
+  if (s === 2) { bell(next * 2, .55, .022, t, M); if (beat % 2 === 0) bell(PELOG[1] / 2, .12, .03, t, M); } // bonang / kethuk
+  if (s % 2 === 0 || Math.random() < .3) bell((s % 2 ? next : note) * 4 / 2, .3, .012, t, M);      // peking
+  const kk = KENDANG[(beat % 4) * 4 + s]; if (kk !== '.') kendang(t, kk, M);
+  if (beat === 3 && s === 0) { if (gi % 2 === 1) sing(t, SINDEN[(gi >> 1) % SINDEN.length], M); else if (gi % 4 === 2) suling(t, M); } }
+setInterval(() => { if (!AU.ctx || !AU.on || AU.ctx.state !== 'running') return; while (AU.next < AU.ctx.currentTime + .2) { scheduleStep(AU.step, AU.next); AU.next += MSTEP; AU.step++; } }, 30);
 const musicStart = () => { if (!AU.ctx || AU.on) return; AU.on = true; AU.next = AU.ctx.currentTime + .1; };
 
 // ---------- State, pose & camera ----------
@@ -809,13 +1080,13 @@ let W = 0, H = 0, renderScale = DPR0;
 function resize() { W = innerWidth; H = innerHeight; canvas.width = Math.max(1, Math.floor(W * renderScale)); canvas.height = Math.max(1, Math.floor(H * renderScale)); }
 addEventListener('resize', resize);
 function computeBones() {
-  const r = ident(BONES.root); rotY(r, charYaw.v);
+  const r = ident(BONES.root); rotY(r, charYaw.v); if (gender === 'm') scale(r, 1.04, 1.04, 1.04);
   const br = Math.sin(time * 1.6) * .004, sw = Math.sin(time * .8) * .015;
   const t = cp(BONES.torso, r); translate(t, 0, 1.0, 0); rotZ(t, sw * .5); scale(t, 1, 1 + br, 1 + br * 1.5); translate(t, 0, -1.0, 0);
   const h = cp(BONES.head, t); translate(h, 0, 1.45, 0); rotY(h, pose.head[2] + Math.sin(time * .5) * .05); rotZ(h, pose.head[1] + Math.sin(time * .7) * .02); rotX(h, pose.head[0]); translate(h, 0, -1.45, 0);
   for (const [side, key, u, f, ha] of [[1, 'L', 'upL', 'foL', 'haL'], [-1, 'R', 'upR', 'foR', 'haR']]) {
     const [fwd, out, bend, tw] = pose[key];
-    const a = cp(BONES[u], t); translate(a, side * .19, 1.315, 0); rotY(a, side * tw); rotZ(a, side * out); rotX(a, -fwd);
+    const a = cp(BONES[u], t); translate(a, side * (gender === 'm' ? .214 : .19), 1.315, 0); rotY(a, side * tw); rotZ(a, side * out); rotX(a, -fwd);
     const b = cp(BONES[f], a); translate(b, 0, -.28, 0); rotX(b, -bend);
     const c = cp(BONES[ha], b); translate(c, 0, -.245, 0); rotX(c, -.1);
   }
@@ -881,7 +1152,7 @@ function render(dt) {
 }
 
 // ---------- UI ----------
-let curCat = 'kebaya';
+let curCat = CATS[0].id;
 const show = (id, on) => $(id).classList.toggle('hidden', !on);
 const thumbCache = {};
 function thumb(cat, key) {
@@ -893,6 +1164,22 @@ function thumb(cat, key) {
       g.fillStyle = k.inner || '#e8d8b8'; if (k.style !== 'blus') { g.beginPath(); g.moveTo(68, 18); g.lineTo(92, 18); g.lineTo(80, k.style === 'kartini' ? 100 : 70); g.fill(); }
       if (k.style === 'kutubaru') { g.fillStyle = g.createPattern(texCanvas('bef_' + k.bef), 'repeat'); g.fillRect(72, 70, 16, 74); }
       g.strokeStyle = k.trim || '#fff'; g.lineWidth = 3; g.beginPath(); g.moveTo(68, 18); g.lineTo(80, k.style === 'kartini' ? 100 : 70); g.lineTo(92, 18); g.stroke(); }
+  else if (cat === 'atasan') { const a = ATASAN_M[key]; g.save(); g.scale(.45, .45); g.fillStyle = g.createPattern(texCanvas('am_' + key), 'repeat');
+      g.beginPath(); g.moveTo(130, 40); g.lineTo(226, 40); g.lineTo(306, 96); g.lineTo(276, 150); g.lineTo(256, 132); g.lineTo(256, a.style === 'surjan' ? 300 : 330); g.lineTo(100, a.style === 'surjan' ? 300 : 330); g.lineTo(100, 132); g.lineTo(80, 150); g.lineTo(50, 96); g.closePath(); g.fill();
+      if (a.style === 'beskap') { g.fillStyle = '#3a2414'; g.beginPath(); g.moveTo(100, 280); g.quadraticCurveTo(178, 240, 256, 280); g.lineTo(256, 340); g.lineTo(100, 340); g.fill(); }
+      g.restore(); g.strokeStyle = a.trim; g.lineWidth = 3; g.fillStyle = a.btn; g.beginPath(); g.moveTo(66, 18); g.lineTo(94, 18); g.stroke();
+      if (a.style === 'beskap') { g.beginPath(); g.moveTo(80, 20); g.lineTo(60, 92); g.stroke(); for (let k = 0; k < 5; k++) { g.beginPath(); g.arc(83 - k * 4.6, 28 + k * 15, 3, 0, TAU); g.fill(); } }
+      else { g.beginPath(); g.moveTo(80, 20); g.lineTo(80, 132); g.stroke(); for (let k = 0; k < 5; k++) { g.beginPath(); g.arc(80, 30 + k * 22, 3, 0, TAU); g.fill(); } } }
+  else if (cat === 'wajah') { const c2 = newCanvas(1024, 512); paintFaceM(WAJAH[key], false, c2); g.drawImage(c2, 136, 160, 240, 240, 0, 0, 160, 160); }
+  else if (cat === 'blangkon') { const b = BLANGKON[key]; g.fillStyle = SKIN; g.beginPath(); g.ellipse(80, 104, 46, 54, 0, 0, TAU); g.fill();
+      if (b.tex) { g.save(); g.beginPath(); g.moveTo(26, 104); g.bezierCurveTo(22, 20, 138, 20, 134, 104); g.quadraticCurveTo(80, 70, 26, 104); g.clip(); g.fillStyle = g.createPattern(texCanvas(b.tex), 'repeat'); g.scale(.35, .35); g.fillRect(0, 0, 460, 460); g.restore();
+        g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 6; g.beginPath(); g.moveTo(28, 100); g.quadraticCurveTo(80, 70, 132, 100); g.stroke();
+        if (b.style === 'jogja') { g.fillStyle = g.createPattern(texCanvas(b.tex), 'repeat'); g.beginPath(); g.arc(134, 96, 20, 0, TAU); g.fill(); } }
+      else { g.fillStyle = '#1a1412'; g.beginPath(); g.moveTo(30, 100); g.bezierCurveTo(26, 30, 134, 30, 130, 100); g.quadraticCurveTo(80, 64, 30, 100); g.fill(); g.font = '40px serif'; g.textAlign = 'center'; g.fillText('🚫', 80, 146); } }
+  else if (cat === 'keris') { const k = KERIS[key]; if (!k.style) { g.font = '70px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🚫', 80, 84); } else {
+      g.save(); g.translate(80, 84); g.rotate(-.5); g.fillStyle = '#5a3018'; g.fillRect(-7, -20, 14, 92); g.fillStyle = k.pendok; g.fillRect(-8, 8, 16, 62);
+      g.fillStyle = '#6a3a1c'; if (k.style === 'ladrang') { g.beginPath(); g.moveTo(-46, -36); g.quadraticCurveTo(0, -8, 40, -34); g.lineTo(36, -20); g.quadraticCurveTo(0, 2, -42, -22); g.fill(); } else { g.beginPath(); g.ellipse(-4, -22, 30, 12, 0, 0, TAU); g.fill(); }
+      g.fillStyle = '#3a1e0e'; g.fillRect(-14, -58, 10, 30); g.beginPath(); g.arc(-12, -60, 8, 0, TAU); g.fill(); g.fillStyle = '#e3b23e'; g.fillRect(-16, -30, 14, 5); g.restore(); } }
   else if (cat === 'bawahan') { g.fillStyle = g.createPattern(texCanvas(key), 'repeat'); g.save(); g.scale(.4, .4); g.fillRect(0, 0, 400, 400); g.restore(); g.fillStyle = 'rgba(0,0,0,.15)'; g.fillRect(100, 0, 12, 160); }
   else if (cat === 'selendang') { const s = SELENDANG[key]; if (s.fab) { g.fillStyle = g.createPattern(texCanvas(s.fab), 'repeat'); g.save(); g.translate(80, 80); g.rotate(-.5); g.scale(.4, .4); g.fillRect(-120, -500, 240, 1000); g.restore(); } else { g.font = '70px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🚫', 80, 84); } }
   else if (cat === 'makeup') { const mk = MAKEUP[key]; g.fillStyle = SKIN; g.fillRect(0, 0, 160, 160);
@@ -904,7 +1191,19 @@ function thumb(cat, key) {
   return (thumbCache[id] = c.toDataURL());
 }
 function buildTabs() { $('tabs').innerHTML = CATS.map(c => `<button class="tab${c.id === curCat ? ' on' : ''}" data-c="${c.id}">${c.name}</button>`).join('');
-  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { curCat = b.dataset.c; sfx('tab'); buildTabs(); buildItems(); cam.zoomT = curCat === 'makeup' ? 1 : 0; })); }
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { curCat = b.dataset.c; sfx('tab'); buildTabs(); buildItems(); viewForCat(); })); }
+function viewForCat() { cam.zoomT = curCat === 'makeup' || curCat === 'wajah' ? 1 : 0;
+  const want = curCat === 'keris' ? Math.PI : curCat === 'blangkon' ? .75 : 0;
+  charYaw.user = Math.round((charYaw.user - want) / TAU) * TAU + want; }
+function setGender(gd, fromDress) { if (gd === gender) return; gender = gd; store('ooGender', gd);
+  outfit = gd === 'm' ? outfitM : outfitF; CATS = gd === 'm' ? CATS_M : CATS_F; curCat = CATS[0].id;
+  refreshFace(); buildCharacter(); changeFx = 1; burst(); refreshNames();
+  if (fromDress) { buildTabs(); buildItems(); viewForCat(); toast(gd === 'm' ? '👨🏽 ' + NAMES.m : '👩🏽 ' + NAMES.f, '#ffd98a', gd === 'm' ? 'Beskap · Blangkon · Keris' : 'Kebaya · Batik · Makeup'); } }
+function refreshNames() { const m = gender === 'm';
+  document.querySelectorAll('.gp').forEach(b => b.classList.toggle('on', b.dataset.g === gender));
+  $('menuSub').innerHTML = m ? `Dandani ${NAMES.m} pakai beskap, jarik batik, blangkon &amp; keris, terus pamer di pendopo joglo! 🎩` : 'Dandani Mbak Shafa pakai kebaya &amp; kain batik motif Jawa, pilih makeup, terus pamer di pendopo joglo! 🌺';
+  $('themeSub').textContent = `Dandani ${NAMES[gender]} sesuai acaranya. Tiga juri bakal menilai OOTD-mu! ⭐`;
+  $('btnSwap').textContent = m ? '👩🏽' : '👨🏽'; $('btnSwap').title = 'Ganti ke ' + (m ? NAMES.f : NAMES.m); }
 function buildItems() {
   const C = CATS.find(c => c.id === curCat); $('catTitle').textContent = C.title;
   $('items').innerHTML = Object.entries(C.list).map(([k, it]) => {
@@ -916,15 +1215,14 @@ function buildItems() {
 function choose(cat, key) {
   audioInit(); sfx('pick');
   if (cat === 'aksesoris') outfit.aksesoris[key] = !outfit.aksesoris[key]; else outfit[cat] = key;
-  if (cat === 'makeup') refreshFace(); else buildCharacter();
+  if (cat === 'makeup' || cat === 'wajah') refreshFace(); else buildCharacter();
   changeFx = 1; burst(); buildItems();
   const it = CATS.find(c => c.id === cat).list[key];
   if (it.info) toast(it.name, '#ffd98a', it.info);
 }
 function burst() { for (let i = 0; i < 26; i++) { const a = Math.random() * TAU, y = Math.random() * 1.8; sparkles.push({ x: Math.cos(a) * .35, y, z: Math.sin(a) * .35, vx: Math.cos(a) * .4, vy: .3 + Math.random() * .5, vz: Math.sin(a) * .4, life: .9, max: .9 }); } }
 function randomize() { const r = o => { const k = Object.keys(o); return k[Math.floor(Math.random() * k.length)]; };
-  outfit.kebaya = r(KEBAYA); outfit.bawahan = r(BATIK); outfit.makeup = r(MAKEUP); outfit.rambut = r(HAIR); outfit.selendang = r(SELENDANG);
-  outfit.aksesoris = {}; for (const k of Object.keys(ACC)) if (Math.random() < .45) outfit.aksesoris[k] = true;
+  for (const c of CATS) { if (c.multi) { outfit[c.id] = {}; for (const k of Object.keys(c.list)) if (Math.random() < .45) outfit[c.id][k] = true; } else outfit[c.id] = r(c.list); }
   refreshFace(); buildCharacter(); changeFx = 1; burst(); buildItems(); sfx('pick'); }
 let toastTimer = 0;
 function toast(t, c, sub) { const el = $('toast'); el.innerHTML = t + (sub ? `<div style="font-size:.45em;font-weight:800;margin-top:4px;opacity:.9">${sub}</div>` : ''); el.style.color = c || '#fff'; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 1300); }
@@ -933,36 +1231,42 @@ function toast(t, c, sub) { const el = $('toast'); el.innerHTML = t + (sub ? `<d
 function enterDress(th) {
   audioInit(); musicStart(); theme = th; mode = 'dress';
   for (const id of ['menu', 'themesScreen', 'result']) show(id, false);
-  show('top', true); show('panel', true); show('credit', true);
+  show('top', true); show('panel', true); show('credit', true); show('btnSwap', true);
   $('btnDone').classList.toggle('hidden', !th); $('btnPhoto').classList.toggle('hidden', !!th);
   if (th) { $('themePill').innerHTML = `<b>${th.em} ${th.name}</b><span>${th.desc}</span>`; show('themePill', true); show('spacer', false); } else { show('themePill', false); show('spacer', true); }
-  poseName = 'idle'; cam.auto = false; cam.zoomT = curCat === 'makeup' ? 1 : 0; charYaw.user = Math.round(charYaw.v / TAU) * TAU; charYaw.v = charYaw.user;
+  poseName = 'idle'; cam.auto = false; charYaw.user = Math.round(charYaw.v / TAU) * TAU; charYaw.v = charYaw.user; viewForCat();
   buildTabs(); buildItems();
   const h = $('hint'); h.classList.remove('hidden'); h.style.opacity = 1; setTimeout(() => h.style.opacity = 0, 3500); setTimeout(() => h.classList.add('hidden'), 4300);
 }
 function buildThemes() { const best = JSON.parse(load('ooBest') || '{}');
-  $('themeList').innerHTML = THEMES.map((t, i) => `<button class="th" data-i="${i}"><b>${t.em} ${t.name}</b><span>${t.desc}</span><i>${best[t.id] ? '⭐'.repeat(best[t.id]) : 'Belum dicoba'}</i></button>`).join('');
+  $('themeList').innerHTML = THEMES.map((t, i) => `<button class="th" data-i="${i}"><b>${t.em} ${t.name}</b><span>${t.desc}</span><i>${best[t.id + (gender === 'm' ? '_m' : '')] ? '⭐'.repeat(best[t.id + (gender === 'm' ? '_m' : '')]) : 'Belum dicoba'}</i></button>`).join('');
   document.querySelectorAll('.th').forEach(b => b.addEventListener('click', () => { sfx('tap'); enterDress(THEMES[+b.dataset.i]); })); }
 function scoreOutfit(th) {
   const want = th.want, fit = tags => Math.min(1, tags.reduce((s, t) => s + (want[t] || 0), 0));
-  const parts = { kebaya: fit(KEBAYA[outfit.kebaya].tags), bawahan: fit(BATIK[outfit.bawahan].tags), makeup: fit(MAKEUP[outfit.makeup].tags), rambut: fit(HAIR[outfit.rambut].tags), selendang: fit(SELENDANG[outfit.selendang].tags) };
-  const accOn = Object.keys(outfit.aksesoris).filter(k => outfit.aksesoris[k]);
-  parts.aksesoris = accOn.length ? accOn.reduce((s, k) => s + fit(ACC[k].tags), 0) / Math.max(1, accOn.length) * Math.min(1, .5 + accOn.length * .25) : .2;
+  const parts = {};
+  for (const c of CATS) { if (!c.multi) { parts[c.id] = fit(c.list[outfit[c.id]].tags); continue; }
+    const on = Object.keys(outfit[c.id]).filter(k => outfit[c.id][k]);
+    parts[c.id] = on.length ? on.reduce((s, k) => s + fit(c.list[k].tags), 0) / on.length * Math.min(1, .5 + on.length * .25) : .2; }
   let total = 0; for (const c of CATS) total += c.w * parts[c.id];
-  const kt = KEBAYA[outfit.kebaya].tone, bt = BATIK[outfit.bawahan].tone;
-  const harmony = ((['light', 'pastel', 'bright', 'mid'].includes(kt) && bt === 'dark') || (kt === 'dark' && bt === 'bright')) ? 5 : 2;
+  const kt = topList().tone, bt = botList().tone;
+  const harmony = gender === 'm' ? (((kt === 'light' || kt === 'mid') && bt === 'dark') || (kt === 'dark' && botList().shape === 'jarik') || (kt === 'bright' && bt === 'dark') ? 5 : 2)
+    : ((['light', 'pastel', 'bright', 'mid'].includes(kt) && bt === 'dark') || (kt === 'dark' && bt === 'bright')) ? 5 : 2;
   total = Math.round(clamp(total + harmony, 10, 100));
   return { total, parts, harmony };
 }
-const JUDGES = [{ n: 'Bu Ratna · Desainer Kebaya', av: '👩🏻‍🎨' }, { n: 'Mas Dimas · Fotografer', av: '📸' }, { n: 'Mbak Sari · Perias Pengantin', av: '💄' }];
+const JUDGES = [{ n: 'Bu Ratna · Desainer Busana Jawa', av: '👩🏻‍🎨' }, { n: 'Mas Dimas · Fotografer', av: '📸' }, { n: 'Mbak Sari · Perias Pengantin', av: '💄' }];
 function judgeLines(sc, th) {
   const p = sc.parts, worst = Object.entries(p).sort((a, b) => a[1] - b[1])[0][0];
-  const tipsMap = { kebaya: 'kebayanya kurang pas sama acaranya', bawahan: 'motif kainnya bisa dipilih yang lebih cocok', makeup: 'makeup-nya coba disesuaikan lagi', rambut: 'gaya rambutnya kurang nyambung', selendang: 'selendangnya bisa diganti', aksesoris: 'aksesorisnya masih kurang' };
-  const great = ['Masyaallah, ayu tenan! 😍', 'Cocok banget buat ' + th.name + '!', 'Paduan warnanya cantik sekali.', 'Pose & outfit-nya juara! 📸'];
+  const tipsMap = { kebaya: 'kebayanya kurang pas sama acaranya', bawahan: 'motif kainnya bisa dipilih yang lebih cocok', makeup: 'makeup-nya coba disesuaikan lagi', rambut: 'gaya rambutnya kurang nyambung', selendang: 'selendangnya bisa diganti', aksesoris: 'aksesorisnya masih kurang',
+    atasan: 'beskap/surjannya kurang pas sama acaranya', blangkon: 'blangkonnya coba diganti', keris: 'kerisnya kurang cocok sama acaranya', wajah: 'gaya kumis/jenggotnya kurang nyambung' };
+  const M_ = gender === 'm';
+  const great = [M_ ? 'Wah, bagus tenan! Gagah banget 😎' : 'Masyaallah, ayu tenan! 😍', 'Cocok banget buat ' + th.name + '!', 'Paduan warnanya cantik sekali.', 'Pose & outfit-nya juara! 📸'];
   const ok = ['Sudah bagus, tinggal sedikit lagi.', 'Lumayan, tapi ' + tipsMap[worst] + '.', 'Manis! Coba eksplor motif batik lain.'];
-  const low = ['Hmm, ' + tipsMap[worst] + '.', 'Masih bisa lebih cocok sama temanya.', 'Ayo coba lagi, pasti bisa lebih ayu!'];
+  const low = ['Hmm, ' + tipsMap[worst] + '.', 'Masih bisa lebih cocok sama temanya.', M_ ? 'Ayo coba lagi, pasti bisa lebih gagah!' : 'Ayo coba lagi, pasti bisa lebih ayu!'];
   const pool = sc.total >= 85 ? great : sc.total >= 60 ? ok : low;
-  return JUDGES.map((j, i) => ({ ...j, t: (i === 2 && outfit.makeup ? (MAKEUP[outfit.makeup].tags.some(t => th.want[t]) ? 'Makeup ' + MAKEUP[outfit.makeup].name + '-nya pas! ' : 'Makeup-nya kurang masuk ke tema. ') : '') + pool[(i + sc.total) % pool.length] }));
+  const pre = M_ ? (BLANGKON[outfit.blangkon].tags.some(t => th.want[t]) ? (outfit.blangkon === 'none' ? 'Tanpa blangkon malah pas! ' : BLANGKON[outfit.blangkon].name + '-nya pas! ') : 'Blangkonnya kurang masuk ke tema. ')
+    : (MAKEUP[outfit.makeup].tags.some(t => th.want[t]) ? 'Makeup ' + MAKEUP[outfit.makeup].name + '-nya pas! ' : 'Makeup-nya kurang masuk ke tema. ');
+  return JUDGES.map((j, i) => ({ ...j, t: (i === 2 ? pre : '') + pool[(i + sc.total) % pool.length] }));
 }
 let result = null, resultT = 0;
 function finish() {
@@ -973,11 +1277,11 @@ function finish() {
 function showResult() {
   const sc = result, stars = sc.total >= 90 ? 5 : sc.total >= 75 ? 4 : sc.total >= 60 ? 3 : sc.total >= 40 ? 2 : 1;
   result.stars = stars;
-  const best = JSON.parse(load('ooBest') || '{}'); if (!best[theme.id] || stars > best[theme.id]) { best[theme.id] = stars; store('ooBest', JSON.stringify(best)); }
+  const best = JSON.parse(load('ooBest') || '{}'), bk = theme.id + (gender === 'm' ? '_m' : ''); if (!best[bk] || stars > best[bk]) { best[bk] = stars; store('ooBest', JSON.stringify(best)); }
   $('rTheme').textContent = theme.em + ' ' + theme.name.toUpperCase();
   $('rStars').innerHTML = '⭐'.repeat(stars) + '<span style="opacity:.3">' + '⭐'.repeat(5 - stars) + '</span>';
   $('rJudges').innerHTML = judgeLines(sc, theme).map(j => `<div class="judge"><div class="av">${j.av}</div><div><b>${j.n}</b>${j.t}</div></div>`).join('');
-  show('result', true); show('top', true); show('themePill', false); show('spacer', true); show('credit', false);
+  show('result', true); show('top', true); show('btnSwap', false); show('themePill', false); show('spacer', true); show('credit', false);
   let v = 0; const tgt = sc.total, iv = setInterval(() => { v = Math.min(tgt, v + 3); $('rScore').textContent = v; if (v >= tgt) { clearInterval(iv); sfx('win'); } }, 25);
   sfx('applause');
 }
@@ -994,7 +1298,7 @@ function photo() {
   g.fillStyle = 'rgba(40,20,8,.85)'; g.fillRect(60, 1130, 960, 130);
   g.fillStyle = '#ffd98a'; g.font = '900 52px system-ui, sans-serif'; g.textAlign = 'left'; g.fillText('Shafa OOTD Nusantara', 90, 1192);
   g.fillStyle = '#fff'; g.font = '700 30px system-ui, sans-serif';
-  const line = theme && result ? `${theme.em} ${theme.name} · ${'⭐'.repeat(result.stars || 0)} ${result.total}` : `${KEBAYA[outfit.kebaya].name} · ${BATIK[outfit.bawahan].name}`;
+  const line = theme && result ? `${theme.em} ${theme.name} · ${'⭐'.repeat(result.stars || 0)} ${result.total}` : `${NAMES[gender]} · ${topList().name} · ${botList().name}`;
   g.fillText(line, 90, 1236); g.textAlign = 'right'; g.fillStyle = '#ffd98a'; g.font = '900 32px system-ui, sans-serif'; g.fillText('@shafaauray', 990, 1236);
   out.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'shafa-ootd.png'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); });
   toast('📸 Foto tersimpan!', '#ffd98a');
@@ -1005,6 +1309,9 @@ $('btnFree').addEventListener('click', () => { sfx('tap'); enterDress(null); });
 $('btnThemeBack').addEventListener('click', () => { show('themesScreen', false); show('menu', true); });
 $('btnHome').addEventListener('click', toMenu);
 $('btnRand').addEventListener('click', randomize);
+$('btnSwap').addEventListener('click', () => { audioInit(); sfx('tap'); setGender(gender === 'm' ? 'f' : 'm', true); });
+document.querySelectorAll('.gp').forEach(b => b.addEventListener('click', () => { audioInit(); musicStart(); sfx('pick'); setGender(b.dataset.g, false); }));
+refreshNames();
 $('btnZoom').addEventListener('click', () => { cam.zoomT = cam.zoomT > .5 ? 0 : 1; sfx('tap'); });
 $('btnDone').addEventListener('click', finish);
 $('btnPhoto').addEventListener('click', photo);
