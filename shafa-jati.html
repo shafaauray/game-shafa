@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2a170b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Shafa Petak Jati 3D · by @shafaauray</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #2a170b; touch-action: none; overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #fff; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #ui { position: fixed; inset: 0; pointer-events: none; }
+  .hidden { display: none !important; }
+  button { font-family: inherit; pointer-events: auto; cursor: pointer; border: 0; color: #fff; }
+  a { pointer-events: auto; }
+  .glass { background: rgba(40,20,8,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  #hud { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 8px;
+    padding: calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 12px) 0 calc(env(safe-area-inset-left) + 12px); }
+  .ib { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; flex: none; }
+  .mid { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+  #score { font-size: clamp(30px, 8vw, 44px); font-weight: 900; line-height: 1; color: #ffe2a0; text-shadow: 0 3px 0 #6a3a10, 0 0 18px rgba(255,190,90,.45); }
+  #best { font-size: 12px; font-weight: 800; opacity: .85; margin-top: 2px; }
+  #gelar { margin-top: 5px; display: flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 900; color: #ffe2a0; }
+  #gbar { width: 70px; height: 6px; border-radius: 4px; background: rgba(255,255,255,.2); overflow: hidden; } #gbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #d9a83a, #ffe2a0); transition: width .3s; }
+  #toast { position: absolute; left: 50%; top: 30%; transform: translate(-50%,-50%) scale(.6); opacity: 0; text-align: center; white-space: nowrap; font-weight: 900;
+    font-size: clamp(28px, 8vw, 50px); color: #ffe2a0; text-shadow: 0 4px 0 #6a3a10, 0 0 26px rgba(255,190,90,.6); transition: transform .25s cubic-bezier(.2,1.6,.4,1), opacity .25s; }
+  #toast small { display: block; font-size: .42em; letter-spacing: 2px; color: #fff; margin-top: 4px; }
+  #toast.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  #credit { position: absolute; left: calc(env(safe-area-inset-left) + 12px); bottom: calc(env(safe-area-inset-bottom) + 10px); font-weight: 800; font-size: 12px; opacity: .8; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 12px; pointer-events: auto; padding: 22px; text-align: center; overflow: auto; }
+  .screen > :first-child { margin-top: auto; } .screen > :last-child { margin-bottom: auto; }
+  .dim { background: radial-gradient(ellipse at center, rgba(40,20,8,.45), rgba(20,10,3,.86)); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .title { font-size: clamp(44px, 12vw, 92px); font-weight: 900; line-height: .88; letter-spacing: 1px; color: #fff1d6; transform: rotate(-2deg);
+    text-shadow: 0 5px 0 #7a4210, 0 9px 0 rgba(0,0,0,.3), 0 0 30px rgba(255,190,90,.45); }
+  .title span { color: #ffd27a; } .title small { display: block; font-size: .26em; letter-spacing: 6px; color: #ffe6c0; margin-top: 10px; text-shadow: 0 2px 0 #7a4210; }
+  .sub { font-weight: 800; font-size: clamp(13px, 3.6vw, 17px); text-shadow: 0 2px 0 rgba(0,0,0,.5); max-width: 520px; line-height: 1.45; }
+  .big { padding: 15px 44px; border-radius: 999px; font-size: clamp(20px, 5.5vw, 28px); font-weight: 900; background: linear-gradient(#ffd27a, #d9962a); color: #3a2010; box-shadow: 0 7px 0 #8a5a10, 0 12px 24px rgba(0,0,0,.3); }
+  .big:active { transform: translateY(5px); box-shadow: 0 2px 0 #8a5a10; }
+  .small { padding: 10px 22px; border-radius: 999px; font-size: 15px; font-weight: 800; text-decoration: none; color: #fff; display: inline-block; background: rgba(40,20,8,.6); box-shadow: inset 0 0 0 2px rgba(255,220,160,.5); }
+  .by { font-weight: 900; font-size: 15px; padding: 6px 14px; border-radius: 999px; text-decoration: none; color: #fff; background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5); box-shadow: 0 4px 14px rgba(214,41,118,.4); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .card { background: rgba(255,255,255,.1); border-radius: 22px; padding: 14px 26px; min-width: min(300px, 86vw); box-shadow: inset 0 0 0 2px rgba(255,220,160,.3);
+    display: grid; grid-template-columns: auto auto; gap: 4px 18px; font-weight: 800; text-align: left; }
+  .how { padding: 10px 16px; border-radius: 16px; font-weight: 700; font-size: 13px; line-height: 1.6; max-width: min(560px, 92vw); text-align: left; }
+  .best { color: #ffe27a; font-weight: 900; }
+  .h2 { font-size: clamp(30px, 8vw, 52px); font-weight: 900; color: #ffe2a0; text-shadow: 0 4px 0 #6a3a10; }
+  @media (max-height: 520px) { .screen { gap: 8px; padding: 12px; } .title { font-size: 40px; } .title small { font-size: 11px; margin-top: 4px; } .sub { font-size: 12px; } .how { font-size: 11px; padding: 6px 12px; } .big { padding: 10px 32px; font-size: 19px; } }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="ui">
+  <div id="hud" class="hidden">
+    <button class="ib glass" id="btnHome">🏠</button>
+    <div class="mid">
+      <div id="score">0</div>
+      <div id="best">Rekor 0</div>
+      <div id="gelar" class="glass"><span id="gname">Cantrik</span><div id="gbar"><i></i></div></div>
+    </div>
+    <button class="ib glass" id="btnMute">🔊</button>
+    <button class="ib glass" id="btnRestart">↻</button>
+  </div>
+  <div id="toast"></div>
+  <div id="credit" class="hidden">by @shafaauray</div>
+  <div id="menu" class="screen dim">
+    <div class="title">SHAFA<br><span>PETAK JATI</span><small>PUZZLE BALOK KAYU BATIK 3D</small></div>
+    <div class="sub">Susun balok kayu bermotif batik di papan jati 9×9. Penuhi <b>baris</b>, <b>kolom</b>, atau <b>petak 3×3</b> biar meledak jadi debu emas! ✨</div>
+    <button class="big" id="btnPlay">▶ MAIN</button>
+    <div class="best" id="menuBest"></div>
+    <div class="how glass" id="how"></div>
+    <div class="row"><a class="small" href="index.html">← Game lain</a></div>
+    <a class="by" href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener">by @shafaauray</a>
+  </div>
+  <div id="over" class="screen dim hidden">
+    <div class="h2">PETAK PENUH! 🪵</div>
+    <div class="sub">Udah nggak ada tempat buat balok yang tersisa.</div>
+    <div class="card" id="overStats"></div>
+    <button class="big" id="btnAgain">↻ MAIN LAGI</button>
+    <div class="row"><button class="small" id="btnMenu">Menu</button><a class="small" href="index.html">← Game lain</a></div>
+    <a class="by" href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener">by @shafaauray</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+// =====================================================================
+//  SHAFA PETAK JATI 3D — Javanese wooden batik block puzzle · by @shafaauray
+// =====================================================================
+const $ = id => document.getElementById(id);
+const canvas = $('gl');
+const DPR0 = Math.min(window.devicePixelRatio || 1, 2);
+const gl = canvas.getContext('webgl', { antialias: true, alpha: false, powerPreference: 'high-performance' }) || canvas.getContext('experimental-webgl');
+if (!gl) { $('ui').innerHTML = '<div class="screen dim"><div class="sub">Browser kamu belum mendukung WebGL 😢</div></div>'; throw new Error('no webgl'); }
+canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); setTimeout(() => location.reload(), 300); });
+const TAU = Math.PI * 2;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+function hx(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
+function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let R = Math.random; const rr = (a, b) => a + (b - a) * R();
+const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+// ---------- Matrices ----------
+const mat = () => new Float32Array(16);
+function ident(m) { m.fill(0); m[0] = m[5] = m[10] = m[15] = 1; return m; }
+const _mt = mat();
+function mul(out, a, b) { const o = _mt; for (let c = 0; c < 4; c++) { const b0 = b[c * 4], b1 = b[c * 4 + 1], b2 = b[c * 4 + 2], b3 = b[c * 4 + 3];
+  o[c * 4] = a[0] * b0 + a[4] * b1 + a[8] * b2 + a[12] * b3; o[c * 4 + 1] = a[1] * b0 + a[5] * b1 + a[9] * b2 + a[13] * b3;
+  o[c * 4 + 2] = a[2] * b0 + a[6] * b1 + a[10] * b2 + a[14] * b3; o[c * 4 + 3] = a[3] * b0 + a[7] * b1 + a[11] * b2 + a[15] * b3; } out.set(o); return out; }
+function translate(m, x, y, z) { m[12] += m[0] * x + m[4] * y + m[8] * z; m[13] += m[1] * x + m[5] * y + m[9] * z; m[14] += m[2] * x + m[6] * y + m[10] * z; m[15] += m[3] * x + m[7] * y + m[11] * z; return m; }
+function rotX(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const y = m[4 + i], z = m[8 + i]; m[4 + i] = y * c + z * s; m[8 + i] = z * c - y * s; } return m; }
+function rotY(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const x = m[i], z = m[8 + i]; m[i] = x * c - z * s; m[8 + i] = x * s + z * c; } return m; }
+function rotZ(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const x = m[i], y = m[4 + i]; m[i] = x * c + y * s; m[4 + i] = y * c - x * s; } return m; }
+function scale(m, x, y, z) { for (let i = 0; i < 4; i++) { m[i] *= x; m[4 + i] *= y; m[8 + i] *= z; } return m; }
+function perspective(m, fovy, asp, n, f) { const t = 1 / Math.tan(fovy / 2); m.fill(0); m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f); return m; }
+function lookAt(m, e, t) { let zx = e[0] - t[0], zy = e[1] - t[1], zz = e[2] - t[2]; let l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+  let xx = zz, xz = -zx; l = Math.hypot(xx, xz) || 1; xx /= l; xz /= l; const xy = 0; const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  m[0] = xx; m[1] = yx; m[2] = zx; m[3] = 0; m[4] = xy; m[5] = yy; m[6] = zy; m[7] = 0; m[8] = xz; m[9] = yz; m[10] = zz; m[11] = 0;
+  m[12] = -(xx * e[0] + xy * e[1] + xz * e[2]); m[13] = -(yx * e[0] + yy * e[1] + yz * e[2]); m[14] = -(zx * e[0] + zy * e[1] + zz * e[2]); m[15] = 1; return m; }
+function T(x, y, z, sx = 1, sy = 1, sz = 1, ry = 0) { const m = ident(mat()); translate(m, x, y, z); rotY(m, ry); return scale(m, sx, sy, sz); }
+
+// ---------- Geometry ----------
+const BOX_FACES = [
+  [[1, 0, 0], [[.5, -.5, .5], [.5, -.5, -.5], [.5, .5, -.5], [.5, .5, .5]]], [[-1, 0, 0], [[-.5, -.5, -.5], [-.5, -.5, .5], [-.5, .5, .5], [-.5, .5, -.5]]],
+  [[0, 1, 0], [[-.5, .5, .5], [.5, .5, .5], [.5, .5, -.5], [-.5, .5, -.5]]], [[0, -1, 0], [[-.5, -.5, -.5], [.5, -.5, -.5], [.5, -.5, .5], [-.5, -.5, .5]]],
+  [[0, 0, 1], [[-.5, -.5, .5], [.5, -.5, .5], [.5, .5, .5], [-.5, .5, .5]]], [[0, 0, -1], [[.5, -.5, -.5], [-.5, -.5, -.5], [-.5, .5, -.5], [.5, .5, -.5]]],
+];
+const QUV = [[0, 1], [1, 1], [1, 0], [0, 0]];
+class Geo {
+  constructor() { this.a = []; }
+  v(m, p, n, c, e, uv) { const a = this.a, x = p[0], y = p[1], z = p[2];
+    a.push(m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m[5] * y + m[9] * z + m[13], m[2] * x + m[6] * y + m[10] * z + m[14]);
+    const tx = m[0] * n[0] + m[4] * n[1] + m[8] * n[2], ty = m[1] * n[0] + m[5] * n[1] + m[9] * n[2], tz = m[2] * n[0] + m[6] * n[1] + m[10] * n[2];
+    const l = Math.hypot(tx, ty, tz) || 1; a.push(tx / l, ty / l, tz / l, c[0], c[1], c[2], e, uv[0], uv[1]); }
+  box(m, c, e = 0, us = 1, vs = 1, u0 = 0, v0 = 0) { for (const [n, q] of BOX_FACES) { const u = QUV.map(t => [u0 + t[0] * us, v0 + t[1] * vs]);
+    this.v(m, q[0], n, c, e, u[0]); this.v(m, q[1], n, c, e, u[1]); this.v(m, q[2], n, c, e, u[2]); this.v(m, q[0], n, c, e, u[0]); this.v(m, q[2], n, c, e, u[2]); this.v(m, q[3], n, c, e, u[3]); } }
+  sphere(m, c, e = 0, seg = 8) { const rows = 5, P = (i, j) => { const th = i / rows * Math.PI, ph = j / seg * TAU; return [Math.sin(th) * Math.cos(ph) * .5, Math.cos(th) * .5, Math.sin(th) * Math.sin(ph) * .5]; };
+    for (let i = 0; i < rows; i++) for (let j = 0; j < seg; j++) { const a = P(i, j), b = P(i + 1, j), d = P(i + 1, j + 1), f = P(i, j + 1);
+      for (const p of [a, b, d, a, d, f]) this.v(m, p, [p[0] * 2, p[1] * 2, p[2] * 2], c, e, [0, 0]); } }
+  build() { const d = new Float32Array(this.a), b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, d, gl.STATIC_DRAW); return { buf: b, count: d.length / 12 }; }
+}
+const I = ident(mat());
+
+// ---------- Shaders ----------
+const VS = `attribute vec3 aPos; attribute vec3 aNor; attribute vec4 aCol; attribute vec2 aUV; uniform mat4 uVP, uM;
+varying vec3 vN; varying vec4 vC; varying vec3 vW; varying vec2 vUV;
+void main(){ vec4 w = uM * vec4(aPos, 1.0); vW = w.xyz; vN = mat3(uM[0].xyz, uM[1].xyz, uM[2].xyz) * aNor; vC = aCol; vUV = aUV; gl_Position = uVP * w; }`;
+const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec3 vN; varying vec4 vC; varying vec3 vW; varying vec2 vUV;
+uniform sampler2D uTex; uniform vec3 uCam, uKey, uKeyC, uSkyC, uGndC, uFogC, uColor, uGlowC; uniform float uSpec, uFog, uAlpha, uGlow;
+void main(){ vec4 t = texture2D(uTex, vUV); vec3 n = normalize(vN); vec3 v = normalize(uCam - vW);
+  vec3 base = vC.rgb * t.rgb * uColor;
+  vec3 col = base * (mix(uGndC, uSkyC, n.y * 0.5 + 0.5) + uKeyC * max(dot(n, uKey), 0.0));
+  vec3 h = normalize(uKey + v); col += uKeyC * pow(max(dot(n, h), 0.0), 40.0) * uSpec;
+  col += pow(1.0 - max(dot(n, v), 0.0), 3.0) * 0.12 * base;
+  col = mix(col, base * 1.2, vC.a);
+  col += uGlowC * uGlow;
+  float d = length(uCam - vW) * uFog; col = mix(col, uFogC, clamp(1.0 - exp(-d * d), 0.0, 1.0));
+  gl_FragColor = vec4(col, uAlpha); }`;
+const BG_VS = `attribute vec2 aPos; varying vec2 vP; void main(){ vP = aPos; gl_Position = vec4(aPos, 0.999, 1.0); }`;
+const BG_FS = `precision mediump float; varying vec2 vP; uniform float uTime;
+void main(){ float r = length(vP * vec2(0.8, 1.0)); vec3 c = mix(vec3(0.42, 0.25, 0.12), vec3(0.09, 0.05, 0.02), smoothstep(0.1, 1.4, r));
+  gl_FragColor = vec4(c, 1.0); }`;
+function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+function program(vs, fs, attrs) { const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  attrs.forEach((a, i) => gl.bindAttribLocation(p, i, a)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const U = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); U[info.name] = gl.getUniformLocation(p, info.name); } return { p, U }; }
+const MAIN = program(VS, FS, ['aPos', 'aNor', 'aCol', 'aUV']), U = MAIN.U;
+const BG = program(BG_VS, BG_FS, ['aPos']);
+const bgBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bgBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+
+// ---------- Textures ----------
+function newCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function glTex(cv) { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT); return t; }
+const WHITE = (() => { const c = newCanvas(4, 4), x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 4, 4); return glTex(c); })();
+function woodCanvas(base, dark, seed) {
+  const c = newCanvas(512, 512), g = c.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, 512, 512); R = mulberry(seed);
+  for (let i = 0; i < 160; i++) { const y = rr(0, 512); g.strokeStyle = `rgba(${dark},${rr(.05, .22)})`; g.lineWidth = rr(1, 4); g.beginPath(); g.moveTo(0, y);
+    g.bezierCurveTo(170, y + rr(-14, 14), 340, y + rr(-14, 14), 512, y); g.stroke(); }
+  for (let i = 0; i < 6; i++) { const x = rr(40, 470), y = rr(40, 470); for (let k = 1; k < 6; k++) { g.strokeStyle = `rgba(${dark},.18)`; g.lineWidth = 2; g.beginPath(); g.ellipse(x, y, k * 6, k * 3, 0, 0, TAU); g.stroke(); } }
+  R = Math.random; return c; }
+// tiny batik tiles for the top of each block (128px repeat, drawn at 512 = 4x4 repeats)
+function motifCanvas(kind, bg, fg, ac) {
+  const c = newCanvas(256, 256), g = c.getContext('2d'); g.fillStyle = bg; g.fillRect(0, 0, 256, 256);
+  g.lineCap = 'round';
+  // carved bevel frame
+  g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 14; g.strokeRect(7, 7, 242, 242); g.strokeStyle = 'rgba(255,240,200,.25)'; g.lineWidth = 4; g.strokeRect(20, 20, 216, 216);
+  const cx = 128, cy = 128;
+  if (kind === 'kawung') { for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + Math.PI / 4; g.save(); g.translate(cx + Math.cos(a) * 42, cy + Math.sin(a) * 42); g.rotate(a);
+      g.fillStyle = fg; g.beginPath(); g.ellipse(0, 0, 42, 25, 0, 0, TAU); g.fill(); g.strokeStyle = ac; g.lineWidth = 5; g.beginPath(); g.ellipse(0, 0, 27, 13, 0, 0, TAU); g.stroke();
+      g.fillStyle = bg; g.beginPath(); g.arc(8, 0, 5, 0, TAU); g.fill(); g.restore(); } g.fillStyle = ac; g.beginPath(); g.arc(cx, cy, 10, 0, TAU); g.fill(); }
+  else if (kind === 'parang') { g.save(); g.beginPath(); g.rect(20, 20, 216, 216); g.clip(); g.strokeStyle = fg; g.lineWidth = 9;
+      for (let k = -2; k <= 2; k++) { const o = k * 90; g.beginPath(); g.moveTo(o - 40, 300); g.lineTo(o + 300, -40); g.stroke(); }
+      for (let k = -2; k <= 2; k++) for (let t = -1; t <= 4; t++) { const x = k * 90 + 130 + t * 60 * .707 - 70, y = 128 - t * 60 * .707 + 70 - k * 0;
+        g.save(); g.translate(x - k * 45, y + k * 45 - k * 45); g.rotate(-Math.PI / 4); g.fillStyle = fg; g.beginPath(); g.moveTo(-18, -24); g.bezierCurveTo(18, -20, -18, 20, 18, 24); g.bezierCurveTo(-4, 14, 4, -14, -18, -24); g.fill(); g.restore(); }
+      g.restore(); }
+  else if (kind === 'truntum') { for (const [x, y, s] of [[cx, cy, 1.4], [64, 64, .8], [192, 64, .8], [64, 192, .8], [192, 192, .8]]) { g.fillStyle = fg;
+      for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; g.beginPath(); g.ellipse(x + Math.cos(a) * 16 * s, y + Math.sin(a) * 16 * s, 11 * s, 5 * s, a, 0, TAU); g.fill(); }
+      g.fillStyle = ac; g.beginPath(); g.arc(x, y, 6 * s, 0, TAU); g.fill(); } }
+  else if (kind === 'sidomukti') { g.strokeStyle = fg; g.lineWidth = 7; g.beginPath(); g.moveTo(cx, 26); g.lineTo(230, cy); g.lineTo(cx, 230); g.lineTo(26, cy); g.closePath(); g.stroke();
+      g.fillStyle = fg; for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 22, cy - 12, 22, 28, s * .5, 0, TAU); g.fill(); g.beginPath(); g.ellipse(cx + s * 16, cy + 20, 14, 18, -s * .4, 0, TAU); g.fill(); }
+      g.fillStyle = ac; g.fillRect(cx - 4, cy - 30, 8, 60); }
+  else if (kind === 'ceplok') { g.fillStyle = fg; for (let k = 0; k < 8; k++) { const a = k / 8 * TAU; g.beginPath(); g.ellipse(cx + Math.cos(a) * 46, cy + Math.sin(a) * 46, 28, 12, a, 0, TAU); g.fill(); }
+      g.fillStyle = ac; g.beginPath(); g.arc(cx, cy, 28, 0, TAU); g.fill(); g.fillStyle = bg; g.beginPath(); g.arc(cx, cy, 13, 0, TAU); g.fill(); }
+  else if (kind === 'lereng') { g.save(); g.beginPath(); g.rect(20, 20, 216, 216); g.clip(); for (let k = -4; k < 8; k++) { g.fillStyle = k % 2 ? fg : ac; g.beginPath(); const o = k * 40; g.moveTo(o, 256); g.lineTo(o + 20, 256); g.lineTo(o + 276, 0); g.lineTo(o + 256, 0); g.fill(); } g.restore();
+      g.fillStyle = bg; g.beginPath(); g.arc(cx, cy, 30, 0, TAU); g.fill(); g.fillStyle = ac; g.beginPath(); g.arc(cx, cy, 14, 0, TAU); g.fill(); }
+  // gold carved corner dots
+  g.fillStyle = '#e8c060'; for (const [x, y] of [[30, 30], [226, 30], [30, 226], [226, 226]]) { g.beginPath(); g.arc(x, y, 6, 0, TAU); g.fill(); }
+  return c;
+}
+const KINDS = [
+  { name: 'Parang Sogan', motif: 'parang', bg: '#4a2a14', fg: '#d9a868', ac: '#f3e3c0', body: '#7a4a24' },
+  { name: 'Kawung Emas', motif: 'kawung', bg: '#b8862e', fg: '#fff0c8', ac: '#5a3a10', body: '#8a5a20' },
+  { name: 'Truntum Marun', motif: 'truntum', bg: '#6a1422', fg: '#f0d8a8', ac: '#e3b24a', body: '#5a2018' },
+  { name: 'Sidomukti Nila', motif: 'sidomukti', bg: '#1f2d52', fg: '#e3d8bc', ac: '#9ab0d8', body: '#4a3a30' },
+  { name: 'Ceplok Hijau', motif: 'ceplok', bg: '#2f5a3a', fg: '#e8dcb0', ac: '#d9a83a', body: '#4a4020' },
+  { name: 'Lereng Coklat', motif: 'lereng', bg: '#a8784a', fg: '#3d2414', ac: '#f3e0b8', body: '#8a6038' },
+];
+const KTEX = [], KBODY = [];
+let TEX_WOOD, TEX_TABLE, TEX_PLAQUE, TEX_CELL;
+
+// ---------- Meshes ----------
+const N = 9, HALF = N / 2;
+let MESH = {};
+function buildMeshes() {
+  let g = new Geo(); g.box(T(0, .21, 0, .94, .42, .94), [1, 1, 1], 0, 1, 1); MESH.body = g.build();
+  g = new Geo(); g.box(T(0, .44, 0, .86, .05, .86), [1, 1, 1], 0); MESH.top = g.build();
+  g = new Geo(); g.sphere(T(0, 0, 0), [1, 1, 1], 1, 8); MESH.spark = g.build();
+  // board: carved teak tray
+  g = new Geo(); const W_ = [1, 1, 1], D_ = [.78, .78, .78];
+  g.box(T(0, -.32, 0, N + 1.6, .5, N + 1.6), W_, 0, 3, 3);
+  for (const s of [-1, 1]) { g.box(T(s * (HALF + .45), .02, 0, .9, .26, N + 1.6), W_, 0, 3, .3); g.box(T(0, .02, s * (HALF + .45), N, .26, .9), W_, 0, .3, 3); }
+  for (const s of [-1, 1]) { g.box(T(s * (HALF + .08), .16, 0, .06, .02, N + .2), hx('#e8b84a'), .35); g.box(T(0, .16, s * (HALF + .08), N + .2, .02, .06), hx('#e8b84a'), .35); }
+  MESH.board = g.build();
+  g = new Geo();
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { const p = (Math.floor(i / 3) + Math.floor(j / 3)) % 2, c = p ? [.55, .42, .3] : [.7, .55, .4];
+    g.box(T(i - HALF + .5, -.08, j - HALF + .5, .93, .04, .93), c, 0, .5, .5, (i % 2) * .5, (j % 2) * .5); }
+  for (let k = 1; k < 3; k++) { g.box(T(k * 3 - HALF, -.05, 0, .05, .02, N), hx('#e8b84a'), .3); g.box(T(0, -.05, k * 3 - HALF, N, .02, .05), hx('#e8b84a'), .3); }
+  MESH.cells = g.build();
+  // table & surroundings
+  g = new Geo(); g.box(T(0, -.62, 2, 60, .1, 60), [1, 1, 1], 0, 12, 12); MESH.table = g.build();
+  // tray plates (lepek)
+  g = new Geo(); g.box(T(0, -.12, 0, 3.0, .12, 3.0), [1, 1, 1], 0, 1, 1); g.box(T(0, -.04, 0, 2.7, .03, 2.7), [.7, .55, .38], 0, .6, .6); MESH.plate = g.build();
+  // plaque on the front edge
+  g = new Geo(); g.box(T(0, 0, 0, 4.2, .5, .04), [1, 1, 1], .15); MESH.plaque = g.build();
+}
+
+// ---------- Pieces ----------
+const SHAPES = [
+  { c: [[0, 0]], w: 3 }, { c: [[0, 0], [1, 0]], w: 4 }, { c: [[0, 0], [0, 1]], w: 4 },
+  { c: [[0, 0], [1, 0], [2, 0]], w: 4 }, { c: [[0, 0], [0, 1], [0, 2]], w: 4 },
+  { c: [[0, 0], [1, 0], [2, 0], [3, 0]], w: 3 }, { c: [[0, 0], [0, 1], [0, 2], [0, 3]], w: 3 },
+  { c: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]], w: 1.5 }, { c: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]], w: 1.5 },
+  { c: [[0, 0], [1, 0], [0, 1], [1, 1]], w: 4 },
+  { c: [[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2]], w: 1 },
+  { c: [[0, 0], [0, 1], [1, 1]], w: 3 }, { c: [[0, 0], [1, 0], [0, 1]], w: 3 }, { c: [[1, 0], [1, 1], [0, 1]], w: 3 }, { c: [[0, 0], [1, 0], [1, 1]], w: 3 },
+  { c: [[0, 0], [0, 1], [0, 2], [1, 2]], w: 2 }, { c: [[1, 0], [1, 1], [1, 2], [0, 2]], w: 2 }, { c: [[0, 0], [1, 0], [2, 0], [0, 1]], w: 2 }, { c: [[0, 0], [1, 0], [2, 0], [2, 1]], w: 2 },
+  { c: [[0, 0], [1, 0], [2, 0], [1, 1]], w: 2 }, { c: [[1, 0], [0, 1], [1, 1], [2, 1]], w: 2 }, { c: [[0, 0], [0, 1], [0, 2], [1, 1]], w: 1.5 }, { c: [[1, 0], [1, 1], [1, 2], [0, 1]], w: 1.5 },
+  { c: [[1, 0], [2, 0], [0, 1], [1, 1]], w: 1.5 }, { c: [[0, 0], [1, 0], [1, 1], [2, 1]], w: 1.5 }, { c: [[0, 0], [0, 1], [1, 1], [1, 2]], w: 1.5 }, { c: [[1, 0], [1, 1], [0, 1], [0, 2]], w: 1.5 },
+  { c: [[0, 0], [0, 1], [0, 2], [1, 2], [2, 2]], w: 1 }, { c: [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2]], w: 1 },
+  { c: [[1, 0], [0, 1], [1, 1], [2, 1], [1, 2]], w: .8 }, { c: [[0, 0], [1, 1]], w: 1 }, { c: [[1, 0], [0, 1]], w: 1 },
+];
+SHAPES.forEach(s => { s.W = Math.max(...s.c.map(p => p[0])) + 1; s.H = Math.max(...s.c.map(p => p[1])) + 1; });
+const SW = SHAPES.reduce((a, s) => a + s.w, 0);
+function randShape() { let r = Math.random() * SW; for (const s of SHAPES) { r -= s.w; if (r <= 0) return s; } return SHAPES[0]; }
+
+// ---------- Game state ----------
+let grid = [], blocks = [], fx = [], sparks = [], tray = [], drag = null, ghost = null, highlight = null;
+let score = 0, best = Number(load('pjBest')) || 0, combo = 0, streak = 0, state = 'menu', time = 0, shake = 0, overT = 0, gelarIdx = 0;
+const GELAR = [{ n: 'Cantrik', s: 0 }, { n: 'Abdi Dalem', s: 400 }, { n: 'Priyayi', s: 1200 }, { n: 'Raden Ayu', s: 2500 }, { n: 'Gusti', s: 4500 }, { n: 'Ratu Batik', s: 7500 }];
+function emptyGrid() { grid = []; for (let i = 0; i < N; i++) { grid.push([]); for (let j = 0; j < N; j++) grid[i].push(null); } }
+emptyGrid();
+const cellPos = (i, j) => [i - HALF + .5, j - HALF + .5];
+let LAYOUT = { portrait: true, slots: [] };
+function computeSlots() {
+  const p = LAYOUT.portrait;
+  LAYOUT.slots = p ? [[-3.3, 7.9], [0, 7.9], [3.3, 7.9]] : [[8.6, -3.5], [8.6, 0], [8.6, 3.5]];
+}
+function fits(shape, oi, oj) { for (const [x, y] of shape.c) { const i = oi + x, j = oj + y; if (i < 0 || j < 0 || i >= N || j >= N || grid[i][j]) return false; } return true; }
+function anyFit(shape) { for (let i = 0; i <= N - shape.W; i++) for (let j = 0; j <= N - shape.H; j++) if (fits(shape, i, j)) return true; return false; }
+function newTray() {
+  let set;
+  for (let tries = 0; tries < 30; tries++) { set = [randShape(), randShape(), randShape()]; if (set.some(anyFit)) break; }
+  tray = set.map((s, k) => ({ shape: s, kind: Math.floor(Math.random() * KINDS.length), used: false, x: LAYOUT.slots[k][0], z: LAYOUT.slots[k][1] + 4, y: 0, sc: 0, slot: k, spawn: k * .08 }));
+}
+function startGame() {
+  audioInit(); musicStart();
+  emptyGrid(); blocks = []; fx = []; sparks = []; score = 0; combo = 0; streak = 0; gelarIdx = 0; state = 'play'; drag = null; ghost = null;
+  newTray(); updateHUD(true);
+  for (const id of ['menu', 'over']) show(id, false); show('hud', true); show('credit', true);
+  sfx('start');
+}
+function canPlace(p, oi, oj) { return fits(p.shape, oi, oj); }
+function snapOrigin(p) { // piece centre -> top-left cell
+  const oi = Math.round(p.x - p.shape.W / 2 + HALF), oj = Math.round(p.z - p.shape.H / 2 + HALF);
+  return [oi, oj];
+}
+function linesFor(cells) { // which rows/cols/boxes would be cleared if cells were filled
+  const filled = (i, j) => grid[i][j] || cells.some(c => c[0] === i && c[1] === j);
+  const rows = [], cols = [], boxes = [];
+  for (let j = 0; j < N; j++) { let ok = true; for (let i = 0; i < N; i++) if (!filled(i, j)) { ok = false; break; } if (ok) rows.push(j); }
+  for (let i = 0; i < N; i++) { let ok = true; for (let j = 0; j < N; j++) if (!filled(i, j)) { ok = false; break; } if (ok) cols.push(i); }
+  for (let b = 0; b < 9; b++) { const bi = (b % 3) * 3, bj = Math.floor(b / 3) * 3; let ok = true; for (let i = 0; i < 3 && ok; i++) for (let j = 0; j < 3; j++) if (!filled(bi + i, bj + j)) { ok = false; break; } if (ok) boxes.push(b); }
+  return { rows, cols, boxes };
+}
+function place(p, oi, oj) {
+  const cells = p.shape.c.map(([x, y]) => [oi + x, oj + y]);
+  for (const [i, j] of cells) { const b = { i, j, kind: p.kind, y: .9 + Math.random() * .2, vy: 0, sc: 1 }; grid[i][j] = b; blocks.push(b); }
+  p.used = true; score += cells.length; sfx('place');
+  const L = linesFor([]), n = L.rows.length + L.cols.length + L.boxes.length;
+  if (n) {
+    const set = new Set();
+    for (const j of L.rows) for (let i = 0; i < N; i++) set.add(i * N + j);
+    for (const i of L.cols) for (let j = 0; j < N; j++) set.add(i * N + j);
+    for (const b of L.boxes) { const bi = (b % 3) * 3, bj = Math.floor(b / 3) * 3; for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) set.add((bi + i) * N + bj + j); }
+    combo++; streak++;
+    const gain = Math.round((set.size * 2 + n * 20 * n) * (1 + (combo - 1) * .5));
+    score += gain; let k = 0;
+    for (const id of set) { const i = Math.floor(id / N), j = id % N, b = grid[i][j]; if (!b) continue; grid[i][j] = null; blocks.splice(blocks.indexOf(b), 1);
+      fx.push({ ...b, t: -k * .012, x: i - HALF + .5, z: j - HALF + .5 }); k++; }
+    sfx('clear', combo + n); shake = Math.min(.25, .06 + n * .04);
+    const words = n >= 4 ? 'LUAR BIASA!' : n === 3 ? 'HEBAT!' : n === 2 ? 'APIK TENAN!' : 'BAGUS!';
+    toast(words, combo > 1 ? 'COMBO ×' + combo + ' · +' + gain : '+' + gain);
+    if (navigator.vibrate) try { navigator.vibrate(n > 1 ? [20, 30, 30] : 20); } catch (e) {}
+  } else { combo = 0; }
+  if (tray.every(t => t.used)) setTimeout(() => { if (state === 'play') { newTray(); checkOver(); } }, 220);
+  else checkOver();
+  updateHUD();
+}
+function checkOver() {
+  const left = tray.filter(t => !t.used); if (!left.length) return;
+  if (!left.some(t => anyFit(t.shape))) { state = 'ending'; overT = 0; sfx('over'); }
+}
+function gameOver() {
+  state = 'over'; const isNew = score > best; if (isNew) { best = score; store('pjBest', best); }
+  $('overStats').innerHTML = `<span>Skor</span><b>${score}</b><span>Rekor</span><b>${best}${isNew ? ' ★ BARU' : ''}</b><span>Gelar</span><b>${GELAR[gelarIdx].n}</b>`;
+  show('hud', false); show('credit', false); show('over', true);
+}
+
+// ---------- Audio (gamelan) ----------
+const AU = { ctx: null, master: null, sfx: null, music: null, noise: null, muted: load('pjMuted') === '1', on: false, next: 0, step: 0 };
+function audioInit() { try { if (!AU.ctx) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return; const c = AU.ctx = new A();
+  AU.master = c.createGain(); AU.master.gain.value = AU.muted ? 0 : .7; AU.master.connect(c.destination);
+  AU.sfx = c.createGain(); AU.sfx.connect(AU.master); AU.music = c.createGain(); AU.music.gain.value = .28; AU.music.connect(AU.master);
+  const len = c.sampleRate; AU.noise = c.createBuffer(1, len, c.sampleRate); const d = AU.noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; }
+  if (AU.ctx.state === 'suspended') AU.ctx.resume(); } catch (e) {} }
+function bell(f, dur, vol, t0 = 0, dest = AU.sfx) { const c = AU.ctx, t = t0 || c.currentTime;
+  for (const [m, v] of [[1, 1], [2.76, .3], [5.4, .1]]) { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f * m;
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol * v, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + dur / m); o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + .05); } }
+function noise(dur, vol, ft, fq, t0 = 0, dest = AU.sfx) { const c = AU.ctx, t = t0 || c.currentTime, s = c.createBufferSource(); s.buffer = AU.noise;
+  const f = c.createBiquadFilter(); f.type = ft; f.frequency.value = fq; const g = c.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random() * .5); s.stop(t + dur + .02); }
+function thump(t, vol, f = 120, dest = AU.sfx) { const c = AU.ctx, o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * .45, t + .15);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + .2); o.connect(g); g.connect(dest); o.start(t); o.stop(t + .22); }
+function gong(t, vol, dest) { const c = AU.ctx, o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(68, t); o.frequency.exponentialRampToValueAtTime(63, t + 3);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .03); g.gain.exponentialRampToValueAtTime(.0001, t + 3.2); o.connect(g); g.connect(dest); o.start(t); o.stop(t + 3.3); }
+const PELOG = [293.7, 311.1, 349.2, 415.3, 440, 523.3, 554.4, 587.3, 622.3, 698.5];
+function sfx(n, a = 0) { if (!AU.ctx || AU.ctx.state !== 'running') return; const now = AU.ctx.currentTime;
+  try { switch (n) {
+    case 'pick': noise(.05, .2, 'bandpass', 2200); thump(now, .2, 300); break;
+    case 'place': thump(now, .45, 140); noise(.06, .25, 'bandpass', 1400); break;
+    case 'back': noise(.12, .12, 'bandpass', 900); break;
+    case 'clear': for (let k = 0; k < 3 + Math.min(a, 5); k++) bell(PELOG[Math.min(9, k + Math.min(a, 4))] * 2, .9, .09, now + k * .06); if (a > 2) gong(now + .1, .3, AU.sfx); break;
+    case 'gelar': [0, 2, 4, 5, 7, 9].forEach((k, i) => bell(PELOG[k] * 2, .8, .08, now + i * .09)); gong(now, .35, AU.sfx); break;
+    case 'over': gong(now, .45, AU.sfx); [7, 5, 4, 2].forEach((k, i) => bell(PELOG[k], 1.2, .07, now + .3 + i * .22)); break;
+    case 'start': [0, 4, 7].forEach((k, i) => bell(PELOG[k] * 2, .6, .08, now + i * .08)); break;
+  } } catch (e) {} }
+const BAL = [4, 5, 7, 5, 4, 2, 4, 0, 2, 4, 5, 4, 2, 0, 2, 4];
+setInterval(() => { if (!AU.ctx || !AU.on || AU.ctx.state !== 'running') return;
+  while (AU.next < AU.ctx.currentTime + .15) { const s = AU.step % 16, bar = Math.floor(AU.step / 16), t = AU.next, M = AU.music;
+    if (s % 2 === 0) bell(PELOG[BAL[(s + bar * 4) % 16]], .9, .045, t, M);
+    if (s % 4 === 2) bell(PELOG[BAL[(s + bar * 4 + 3) % 16]] * 2, .4, .02, t, M);
+    if (s === 0 && bar % 2 === 0) gong(t, .22, M);
+    if (s % 4 === 0 || s === 6 || s === 14) thump(t, .12, 90, M);
+    AU.next += 60 / 80 / 2; AU.step++; } }, 30);
+const musicStart = () => { if (!AU.ctx || AU.on) return; AU.on = true; AU.next = AU.ctx.currentTime + .1; };
+
+// ---------- Rendering ----------
+const VP = mat(), Pm = mat(), V = mat(), M = mat();
+let W = 0, H = 0, renderScale = DPR0, eye = [0, 20, 10], tgt = [0, 0, 0], fov = 40 * Math.PI / 180;
+function resize() { W = innerWidth; H = innerHeight; canvas.width = Math.max(1, Math.floor(W * renderScale)); canvas.height = Math.max(1, Math.floor(H * renderScale));
+  const p = H > W * .95; if (p !== LAYOUT.portrait || !LAYOUT.slots.length) { LAYOUT.portrait = p; computeSlots(); for (const t of tray) { /* will glide to new slot */ } } fitCamera(); }
+addEventListener('resize', resize);
+const PITCH = 1.0; // radians from horizontal
+function project(p) { const x = VP[0] * p[0] + VP[4] * p[1] + VP[8] * p[2] + VP[12], y = VP[1] * p[0] + VP[5] * p[1] + VP[9] * p[2] + VP[13], w = VP[3] * p[0] + VP[7] * p[1] + VP[11] * p[2] + VP[15]; return [x / w, y / w]; }
+function setCam(cx, cz, dist) { tgt = [cx, 0, cz]; eye = [cx, Math.sin(PITCH) * dist, cz + Math.cos(PITCH) * dist]; perspective(Pm, fov, W / H, .1, 200); lookAt(V, eye, tgt); mul(VP, Pm, V); }
+let camFit = { cx: 0, cz: 0, d: 20 };
+function fitCamera() {
+  const p = LAYOUT.portrait, bx0 = -HALF - 1, bx1 = p ? HALF + 1 : 10.3, bz0 = -HALF - 1, bz1 = p ? 9.6 : HALF + 1;
+  const hudPx = (W < 640 ? 118 : 96) + 10, topN = 1 - 2 * hudPx / H, botN = -1 + 2 * 26 / H;
+  let cx = (bx0 + bx1) / 2, cz = (bz0 + bz1) / 2, lo = 5, hi = 120;
+  for (let it = 0; it < 30; it++) { const d = (lo + hi) / 2; setCam(cx, cz, d); let ok = true, yMin = 9, yMax = -9;
+    for (const x of [bx0, bx1]) for (const z of [bz0, bz1]) for (const y of [0, .6]) { const [nx, ny] = project([x, y, z]); if (Math.abs(nx) > .94) ok = false; yMin = Math.min(yMin, ny); yMax = Math.max(yMax, ny); }
+    if (yMax - yMin > topN - botN) ok = false;
+    if (ok) hi = d; else lo = d; }
+  // shift so the content sits between HUD and bottom
+  setCam(cx, cz, hi); let yMin = 9, yMax = -9; for (const x of [bx0, bx1]) for (const z of [bz0, bz1]) for (const y of [0, .6]) { const ny = project([x, y, z])[1]; yMin = Math.min(yMin, ny); yMax = Math.max(yMax, ny); }
+  camFit = { cx, cz, d: hi, shift: (topN + botN) / 2 - (yMin + yMax) / 2 };
+}
+function applyCam() { setCam(camFit.cx, camFit.cz, camFit.d); Pm[9] -= camFit.shift; mul(VP, Pm, V); if (shake > .002) { VP[12] += (Math.random() - .5) * shake * .2; VP[13] += (Math.random() - .5) * shake * .2; } }
+// screen -> world on plane y = Y
+function screenToPlane(sx, sy, Y) {
+  const nx = sx / W * 2 - 1, ny = -(sy / H * 2 - 1) - camFit.shift, t = Math.tan(fov / 2), asp = W / H;
+  const fx = tgt[0] - eye[0], fy = tgt[1] - eye[1], fz = tgt[2] - eye[2], fl = Math.hypot(fx, fy, fz), f = [fx / fl, fy / fl, fz / fl];
+  let r = [-f[2], 0, f[0]]; const rl = Math.hypot(r[0], r[2]); r = [r[0] / rl, 0, r[2] / rl];
+  const u = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+  const d = [f[0] + r[0] * nx * t * asp + u[0] * ny * t, f[1] + r[1] * nx * t * asp + u[1] * ny * t, f[2] + r[2] * nx * t * asp + u[2] * ny * t];
+  const k = (Y - eye[1]) / d[1]; return [eye[0] + d[0] * k, eye[2] + d[2] * k];
+}
+let curBuf = null, curTex = null;
+function draw(mesh, m, tex, color = [1, 1, 1], spec = .2, alpha = 1, glow = 0) {
+  if (curBuf !== mesh.buf) { gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buf); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 48, 0); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 48, 12);
+    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 48, 24); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 48, 40); curBuf = mesh.buf; }
+  if (curTex !== tex) { gl.bindTexture(gl.TEXTURE_2D, tex); curTex = tex; }
+  gl.uniformMatrix4fv(U.uM, false, m); gl.uniform3fv(U.uColor, color); gl.uniform1f(U.uSpec, spec); gl.uniform1f(U.uAlpha, alpha); gl.uniform1f(U.uGlow, glow);
+  gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+}
+function drawBlock(kind, x, y, z, s = 1, alpha = 1, glow = 0, rot = 0) {
+  ident(M); translate(M, x, y, z); if (rot) { rotY(M, rot); rotX(M, rot * .6); } scale(M, s, s, s);
+  draw(MESH.body, M, TEX_WOOD, KBODY[kind], .15, alpha, glow);
+  draw(MESH.top, M, KTEX[kind], [1, 1, 1], .35, alpha, glow);
+}
+function render(dt) {
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  applyCam();
+  gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.useProgram(BG.p); gl.bindBuffer(gl.ARRAY_BUFFER, bgBuf);
+  gl.enableVertexAttribArray(0); for (const i of [1, 2, 3]) gl.disableVertexAttribArray(i); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); gl.drawArrays(gl.TRIANGLES, 0, 3); curBuf = null;
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.useProgram(MAIN.p); for (const i of [0, 1, 2, 3]) gl.enableVertexAttribArray(i);
+  gl.uniformMatrix4fv(U.uVP, false, VP); gl.uniform3fv(U.uCam, eye);
+  const k = [-.4, .85, .45], kl = Math.hypot(...k); gl.uniform3fv(U.uKey, k.map(v => v / kl));
+  gl.uniform3fv(U.uKeyC, [.95, .8, .6]); gl.uniform3fv(U.uSkyC, [.55, .46, .38]); gl.uniform3fv(U.uGndC, [.25, .17, .1]); gl.uniform3fv(U.uFogC, [.1, .055, .02]); gl.uniform1f(U.uFog, .5 / camFit.d);
+  gl.uniform3fv(U.uGlowC, [1, .78, .35]); gl.activeTexture(gl.TEXTURE0); gl.uniform1i(U.uTex, 0); curTex = null;
+  draw(MESH.table, I, TEX_TABLE, [.62, .44, .3], .1);
+  draw(MESH.board, I, TEX_WOOD, [.82, .58, .36], .3);
+  draw(MESH.cells, I, TEX_CELL, [1, 1, 1], .05);
+  ident(M); translate(M, 0, .02, HALF + .92); draw(MESH.plaque, M, TEX_PLAQUE, [1, 1, 1], .4);
+  for (let k2 = 0; k2 < 3; k2++) { const s = LAYOUT.slots[k2]; ident(M); translate(M, s[0], 0, s[1]); draw(MESH.plate, M, TEX_WOOD, [.75, .52, .32], .2); }
+  // board blocks
+  const hl = highlight, pulse = .25 + .2 * Math.sin(time * 10);
+  for (const b of blocks) { const [x, z] = cellPos(b.i, b.j), lit = hl && (hl.rows.includes(b.j) || hl.cols.includes(b.i) || hl.boxes.includes(Math.floor(b.i / 3) + Math.floor(b.j / 3) * 3));
+    drawBlock(b.kind, x, b.y, z, 1, 1, lit ? pulse : 0); }
+  // clearing fx
+  for (const f of fx) { if (f.t < 0) { drawBlock(f.kind, f.x, 0, f.z, 1, 1, .4); continue; } const t = f.t / .5; drawBlock(f.kind, f.x, t * 1.6 + Math.sin(t * Math.PI) * .4, f.z, Math.max(.01, 1 - t), 1, .6 * (1 - t), t * 5); }
+  // tray & dragged piece
+  for (const p of tray) { if (p.used || p === (drag && drag.p)) continue; drawPiece(p, p.x, p.y, p.z, p.sc); }
+  if (ghost) { gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+    for (const [x, y] of ghost.p.shape.c) { const [cx, cz] = cellPos(ghost.oi + x, ghost.oj + y); drawBlock(ghost.p.kind, cx, -.02, cz, 1, .45, .3); }
+    gl.depthMask(true); gl.disable(gl.BLEND); }
+  if (drag) drawPiece(drag.p, drag.p.x, drag.p.y, drag.p.z, drag.p.sc);
+  for (const s of sparks) { const a = s.life / s.max; ident(M); translate(M, s.x, s.y, s.z); const sz = .08 * a; scale(M, sz, sz, sz); draw(MESH.spark, M, WHITE, [1, .85, .45], 0, 1, .8); }
+}
+function drawPiece(p, cx, cy, cz, sc) { const sh = p.shape; for (const [x, y] of sh.c) drawBlock(p.kind, cx + (x - (sh.W - 1) / 2) * sc, cy, cz + (y - (sh.H - 1) / 2) * sc, sc); }
+
+// ---------- Input ----------
+const isTouch = matchMedia && matchMedia('(pointer: coarse)').matches;
+let pointerType = 'mouse';
+canvas.addEventListener('pointerdown', e => {
+  audioInit(); if (state !== 'play' || drag) return; pointerType = e.pointerType;
+  const [wx, wz] = screenToPlane(e.clientX, e.clientY, .2);
+  let bestP = null, bd = 2.6;
+  for (const p of tray) { if (p.used) continue; const d = Math.hypot(wx - p.x, wz - p.z); if (d < bd) { bd = d; bestP = p; } }
+  if (!bestP) return;
+  drag = { p: bestP, id: e.pointerId, off: e.pointerType === 'mouse' ? 0 : 2.4 }; sfx('pick');
+  try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+  moveDrag(e.clientX, e.clientY, true);
+});
+function moveDrag(sx, sy, instant) {
+  const p = drag.p, [wx, wz] = screenToPlane(sx, sy, .9);
+  drag.tx = wx; drag.tz = wz - drag.off;
+  if (instant) { p.x = drag.tx; p.z = drag.tz; }
+  const [oi, oj] = snapOrigin({ x: drag.tx, z: drag.tz, shape: p.shape });
+  if (canPlace(p, oi, oj)) { ghost = { p, oi, oj }; highlight = linesFor(p.shape.c.map(([x, y]) => [oi + x, oj + y])); if (!highlight.rows.length && !highlight.cols.length && !highlight.boxes.length) highlight = null; }
+  else { ghost = null; highlight = null; }
+}
+canvas.addEventListener('pointermove', e => { if (drag && e.pointerId === drag.id) moveDrag(e.clientX, e.clientY); });
+const endDrag = e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const p = drag.p;
+  if (ghost && e.type === 'pointerup') { const g = ghost; drag = null; ghost = null; highlight = null; place(p, g.oi, g.oj); }
+  else { drag = null; ghost = null; highlight = null; sfx('back'); }
+};
+canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+document.addEventListener('touchmove', e => { if (!(e.target.closest && e.target.closest('.screen'))) e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+// ---------- Update ----------
+function step(dt) {
+  time += dt;
+  for (const p of tray) {
+    if (p.used) continue;
+    if (p.spawn > 0) { p.spawn -= dt; continue; }
+    if (drag && drag.p === p) { p.x = damp(p.x, drag.tx, 30, dt); p.z = damp(p.z, drag.tz, 30, dt); p.y = damp(p.y, .9, 14, dt); p.sc = damp(p.sc, 1, 14, dt); }
+    else { const s = LAYOUT.slots[p.slot], fit = 2.5 / Math.max(p.shape.W, p.shape.H, 2.5) * .95, sc = Math.min(.62, fit);
+      p.x = damp(p.x, s[0], 12, dt); p.z = damp(p.z, s[1], 12, dt); p.y = damp(p.y, .05 + Math.sin(time * 2 + p.slot) * .04, 8, dt); p.sc = damp(p.sc, sc * (state === 'play' && !anyFit(p.shape) ? .9 : 1), 10, dt); }
+  }
+  for (const b of blocks) { if (b.y > 0 || b.vy) { b.vy -= 30 * dt; b.y += b.vy * dt; if (b.y < 0) { b.y = 0; b.vy = Math.abs(b.vy) > 1.5 ? -b.vy * .25 : 0; } } }
+  for (const f of fx) { f.t += dt; if (f.t > 0 && !f.sp) { f.sp = true; for (let k = 0; k < 4; k++) sparks.push({ x: f.x, y: .5, z: f.z, vx: rr(-2, 2), vy: rr(2, 5), vz: rr(-2, 2), life: .8, max: .8 }); } }
+  fx = fx.filter(f => f.t < .5);
+  for (const s of sparks) { s.x += s.vx * dt; s.y += s.vy * dt; s.z += s.vz * dt; s.vy -= 6 * dt; s.life -= dt; } sparks = sparks.filter(s => s.life > 0 && sparks.length < 400);
+  shake = damp(shake, 0, 8, dt);
+  if (state === 'ending') { overT += dt; if (overT > 1.4) gameOver(); }
+  if (state === 'menu') { if (!blocks.length && Math.random() < .5) demoFill(); }
+}
+function demoFill() { R = mulberry(7); for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (R() < .35) { const b = { i, j, kind: Math.floor(R() * KINDS.length), y: 0, vy: 0, sc: 1 }; grid[i][j] = b; blocks.push(b); } R = Math.random; }
+
+// ---------- HUD ----------
+const show = (id, on) => $(id).classList.toggle('hidden', !on);
+let hs = -1;
+function updateHUD(force) {
+  if (force || hs !== score) { hs = score; $('score').textContent = score; }
+  $('best').textContent = 'Rekor ' + Math.max(best, score);
+  let gi = 0; for (let i = 0; i < GELAR.length; i++) if (score >= GELAR[i].s) gi = i;
+  if (gi > gelarIdx) { gelarIdx = gi; sfx('gelar'); setTimeout(() => toast('GELAR BARU!', GELAR[gi].n.toUpperCase() + ' 👑'), 500); }
+  if (force) gelarIdx = gi;
+  $('gname').textContent = '👑 ' + GELAR[gelarIdx].n;
+  const nx = GELAR[gelarIdx + 1]; $('gbar').firstElementChild.style.width = nx ? ((score - GELAR[gelarIdx].s) / (nx.s - GELAR[gelarIdx].s) * 100) + '%' : '100%';
+}
+let toastTimer = 0;
+function toast(t, sub) { const el = $('toast'); el.innerHTML = t + (sub ? '<small>' + sub + '</small>' : ''); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 1100); }
+$('how').innerHTML = (isTouch ? '👆 <b>Seret</b> balok dari bawah ke papan (balok muncul di atas jarimu biar kelihatan).' : '🖱️ <b>Seret</b> balok dari nampan ke papan.') +
+  '<br>🪵 Penuhi <b>baris</b>, <b>kolom</b>, atau <b>petak 3×3</b> buat meledakkannya.<br>🔥 Ledakkan berturut-turut buat <b>combo</b> &amp; naikkan gelarmu sampai <b>Ratu Batik</b>!';
+const refreshBest = () => { $('menuBest').textContent = best ? '🏆 Rekor: ' + best : ''; }; refreshBest();
+const refreshMute = () => { $('btnMute').textContent = AU.muted ? '🔇' : '🔊'; }; refreshMute();
+$('btnMute').addEventListener('click', () => { audioInit(); AU.muted = !AU.muted; store('pjMuted', AU.muted ? '1' : '0'); if (AU.master) AU.master.gain.value = AU.muted ? 0 : .7; refreshMute(); });
+$('btnPlay').addEventListener('click', startGame); $('btnAgain').addEventListener('click', startGame);
+$('btnRestart').addEventListener('click', () => { if (confirmRestart()) startGame(); });
+function confirmRestart() { return score < 50 || window.confirm('Mulai ulang dari awal?'); }
+function toMenu() { state = 'menu'; emptyGrid(); blocks = []; tray = []; drag = null; ghost = null; for (const id of ['over', 'hud', 'credit']) show(id, false); show('menu', true); refreshBest(); }
+$('btnHome').addEventListener('click', toMenu); $('btnMenu').addEventListener('click', toMenu);
+
+// ---------- Boot ----------
+buildMeshes();
+TEX_WOOD = glTex(woodCanvas('#b07a48', '40,20,8', 4));
+TEX_TABLE = glTex(woodCanvas('#6a4426', '20,10,4', 9));
+TEX_CELL = glTex((() => { const c = newCanvas(256, 256), g = c.getContext('2d'); g.fillStyle = '#5a3a20'; g.fillRect(0, 0, 256, 256);
+  for (let k = 0; k < 2; k++) for (let l = 0; l < 2; l++) { const x = k * 128 + 64, y = l * 128 + 64; g.strokeStyle = 'rgba(255,220,160,.12)'; g.lineWidth = 3;
+    for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2 + Math.PI / 4; g.beginPath(); g.ellipse(x + Math.cos(a) * 20, y + Math.sin(a) * 20, 20, 11, a, 0, TAU); g.stroke(); } g.strokeStyle = 'rgba(0,0,0,.35)'; g.strokeRect(k * 128 + 4, l * 128 + 4, 120, 120); }
+  return c; })());
+TEX_PLAQUE = glTex((() => { const c = newCanvas(1024, 128), g = c.getContext('2d'); g.fillStyle = '#3a2210'; g.fillRect(0, 0, 1024, 128); g.strokeStyle = '#e8b84a'; g.lineWidth = 8; g.strokeRect(6, 6, 1012, 116);
+  g.fillStyle = '#ffe2a0'; g.font = '900 64px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('PETAK JATI · @shafaauray', 512, 68); return c; })());
+for (const k of KINDS) { KTEX.push(glTex(motifCanvas(k.motif, k.bg, k.fg, k.ac))); KBODY.push(hx(k.body)); }
+resize();
+let last = performance.now(), acc = 0, n = 0;
+function frame(now) { requestAnimationFrame(frame); let dt = (now - last) / 1000; last = now; if (!(dt > 0)) dt = 1 / 60; dt = Math.min(dt, .05);
+  acc += dt; n++; if (acc > 2.5) { if (acc / n > 1 / 40 && renderScale > .75) { renderScale = Math.max(.75, renderScale - .35); resize(); } acc = 0; n = 0; }
+  step(dt); render(dt); }
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

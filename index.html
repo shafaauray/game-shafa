@@ -152,6 +152,13 @@
   .ootd .kn { width: 32px; height: 46px; background: repeating-linear-gradient(45deg, #3d2414 0 6px, #c99a5b 6px 9px); border-radius: 0 0 6px 6px; }
   .ootd .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(30,15,5,.8)); }
 
+  /* Petak Jati card */
+  .jati { background: linear-gradient(160deg, #6a4426, #2a170b); }
+  .jati .brd { position: absolute; right: 8%; top: 8%; width: 46%; aspect-ratio: 1; border-radius: 8px; background: #5a3a20; box-shadow: 0 0 0 7px #b07a48, inset 0 0 0 1px rgba(255,220,160,.2);
+    background-image: linear-gradient(rgba(255,210,140,.18) 1px, transparent 1px), linear-gradient(90deg, rgba(255,210,140,.18) 1px, transparent 1px); background-size: 19% 24%; transform: perspective(300px) rotateX(25deg); }
+  .jati .brd i { position: absolute; width: 18%; height: 22%; border-radius: 3px; background: var(--c); box-shadow: inset 0 0 0 2px rgba(255,220,150,.6), 0 3px 0 rgba(0,0,0,.4); }
+  .jati .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 35%, rgba(25,12,4,.8)); }
+
   /* coming soon */
   .soon { background: rgba(255,255,255,.05); border: 2px dashed rgba(255,255,255,.3); box-shadow: none; justify-content: center; align-items: center; text-align: center; cursor: default; }
   .soon:hover { transform: none; box-shadow: none; }
@@ -236,6 +243,14 @@
       <div class="chips"><span class="chip">👘 DANDAN OOTD</span><span class="chip">3D · KEBAYA &amp; BATIK</span></div>
       <h2>Shafa OOTD Nusantara</h2>
       <p>Pilih kebaya, jarik batik Jawa &amp; makeup di rumah joglo, lalu dinilai juri!</p>
+      <span class="play">▶ MAIN</span>
+    </a>
+
+    <a class="card jati" href="shafa-jati.html">
+      <div class="art"><div class="brd"><i style="--c:#6a1422;left:12%;top:18%"></i><i style="--c:#b8862e;left:31%;top:18%"></i><i style="--c:#1f2d52;left:31%;top:42%"></i><i style="--c:#2f5a3a;left:50%;top:42%"></i><i style="--c:#4a2a14;left:69%;top:66%"></i></div></div>
+      <div class="chips"><span class="chip">🪵 PUZZLE BALOK</span><span class="chip">3D · NUANSA JAWA</span></div>
+      <h2>Shafa Petak Jati 3D</h2>
+      <p>Susun balok kayu batik di papan jati, ledakkan baris, kolom &amp; petak 3×3!</p>
       <span class="play">▶ MAIN</span>
     </a>
 
