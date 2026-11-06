@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a3a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Shafa Sea 3D · by @shafaauray</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0a3a5c;
+    touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+  #ui { position: fixed; inset: 0; pointer-events: none; color: #fff; }
+  .hidden { display: none !important; }
+  button, a.btn { font-family: inherit; pointer-events: auto; cursor: pointer; border: 0; }
+  .glass { background: rgba(5,30,60,.38); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+  #hud { position: absolute; inset: 0;
+    padding: calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 12px) 0 calc(env(safe-area-inset-left) + 12px); }
+  .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  #score { font-size: clamp(26px, 6vw, 40px); font-weight: 900; line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,.25); }
+  #lvl { white-space: nowrap; font-size: 13px; font-weight: 800; opacity: .9; margin-top: 4px; letter-spacing: 1px; }
+  .mid { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 420px; }
+  #chain { display: flex; gap: 4px; padding: 4px 8px; border-radius: 999px; }
+  .fi { width: clamp(24px, 6vw, 34px); height: clamp(16px, 4vw, 22px); opacity: .35; transition: opacity .3s, transform .3s; }
+  .fi.ok { opacity: 1; transform: scale(1.08); filter: drop-shadow(0 0 4px rgba(120,255,200,.9)); }
+  .fi.bad { opacity: .9; filter: drop-shadow(0 0 3px rgba(255,60,60,.9)); }
+  #growWrap { width: min(340px, 52vw); height: 12px; border-radius: 8px; background: rgba(0,0,0,.35); position: relative; overflow: hidden;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.35); }
+  #grow { height: 100%; width: 0; border-radius: 8px; background: linear-gradient(90deg, #3ef0c8, #ffe14d, #ff7ab8); transition: width .25s; }
+  .mark { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.8); }
+  .right { display: flex; gap: 8px; align-items: center; }
+  #lives { white-space: nowrap; font-size: clamp(14px, 4vw, 22px); letter-spacing: 0; filter: drop-shadow(0 2px 0 rgba(0,0,0,.25)); }
+  @media (max-width: 640px) {
+    .top { flex-wrap: wrap; row-gap: 8px; }
+    .mid { order: 3; flex-basis: 100%; max-width: none; }
+    #growWrap { width: min(340px, 80vw); }
+    #combo { top: calc(env(safe-area-inset-top) + 168px); }
+  }
+  .iconbtn { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; }
+  .iconbtn svg { width: 20px; height: 20px; fill: #fff; }
+  #dash { position: absolute; right: calc(env(safe-area-inset-right) + 18px); bottom: calc(env(safe-area-inset-bottom) + 22px);
+    width: 78px; height: 78px; border-radius: 50%; font-size: 30px; color: #fff; pointer-events: auto;
+    background: radial-gradient(circle at 35% 30%, #7ff7ff, #18a8d8 60%, #0b6c9a); box-shadow: 0 6px 0 #075276, 0 10px 20px rgba(0,0,0,.3);
+    display: grid; place-items: center; transition: filter .2s, transform .08s; }
+  #dash:active { transform: translateY(4px); box-shadow: 0 2px 0 #075276; }
+  #dash.cool { filter: grayscale(.8) brightness(.7); }
+  #credit { position: absolute; left: calc(env(safe-area-inset-left) + 14px); bottom: calc(env(safe-area-inset-bottom) + 14px);
+    font-weight: 800; font-size: 13px; opacity: .85; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+  #toast { position: absolute; left: 50%; top: 30%; transform: translate(-50%,-50%) scale(.5); opacity: 0; white-space: nowrap;
+    font-weight: 900; font-size: clamp(26px, 7vw, 46px); text-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 24px rgba(255,255,255,.35);
+    transition: transform .3s cubic-bezier(.2,1.6,.4,1), opacity .3s; }
+  #toast.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  #combo { position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 92px); transform: translateX(-50%);
+    font-weight: 900; font-size: 20px; color: #ffe14d; text-shadow: 0 2px 0 rgba(0,0,0,.3); opacity: 0; transition: opacity .2s; }
+  #hint { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 120px); transform: translateX(-50%);
+    padding: 10px 18px; border-radius: 16px; font-weight: 800; font-size: clamp(13px, 3.4vw, 17px); text-align: center;
+    width: max-content; max-width: 90vw; transition: opacity .6s; }
+  #flash { position: absolute; inset: 0; box-shadow: inset 0 0 120px 40px rgba(255,40,80,.7); opacity: 0; transition: opacity .4s; }
+
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; pointer-events: auto; padding: 24px; text-align: center; }
+  .menu { justify-content: space-between; padding: calc(env(safe-area-inset-top) + 5vh) 20px calc(env(safe-area-inset-bottom) + 5vh); }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .dim { background: radial-gradient(ellipse at center, rgba(5,30,60,.35), rgba(5,20,45,.75)); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .title { font-size: clamp(50px, 13vw, 100px); font-weight: 900; line-height: .86; letter-spacing: 2px; transform: rotate(-3deg);
+    text-shadow: 0 6px 0 #0b7bb0, 0 10px 0 rgba(0,0,0,.2), 0 0 40px rgba(80,220,255,.6); }
+  .title span { color: #ffe14d; text-shadow: 0 6px 0 #e07a1c, 0 10px 0 rgba(0,0,0,.2), 0 0 40px rgba(255,210,80,.6); }
+  .title small { display: block; font-size: .32em; letter-spacing: 6px; color: #8ff7ff; text-shadow: 0 3px 0 #0b7bb0; margin-top: 6px; }
+  .sub { font-weight: 800; font-size: clamp(14px, 3.8vw, 19px); text-shadow: 0 2px 0 rgba(0,0,0,.3); max-width: 520px; }
+  .by { font-weight: 900; font-size: 16px; padding: 6px 14px; border-radius: 999px; text-decoration: none; color: #fff; pointer-events: auto;
+    background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5); box-shadow: 0 4px 14px rgba(214,41,118,.4); }
+  .bigbtn { padding: 16px 46px; border-radius: 999px; font-size: clamp(22px, 6vw, 30px); font-weight: 900; color: #fff;
+    background: linear-gradient(#5ff0ff, #1593d6); box-shadow: 0 7px 0 #0a5c8c, 0 12px 24px rgba(0,0,0,.25);
+    text-shadow: 0 2px 0 rgba(0,0,0,.2); animation: pulse 1.6s ease-in-out infinite; }
+  .bigbtn:active { transform: translateY(5px); box-shadow: 0 2px 0 #0a5c8c; }
+  .smallbtn { padding: 10px 24px; border-radius: 999px; font-size: 16px; font-weight: 800; color: #fff; text-decoration: none; display: inline-block;
+    background: rgba(5,30,60,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); }
+  @keyframes pulse { 50% { transform: scale(1.05); } }
+  .ctrl { padding: 8px 14px; border-radius: 14px; font-weight: 700; font-size: 14px; line-height: 1.5; max-width: min(560px, 88vw); }
+  .best { font-weight: 900; font-size: 18px; color: #ffe27a; text-shadow: 0 2px 0 rgba(0,0,0,.3); }
+  .card { background: rgba(255,255,255,.12); border-radius: 26px; padding: 20px 30px; min-width: min(320px, 86vw);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.3); display: flex; flex-direction: column; gap: 6px; align-items: center; }
+  .h2 { font-size: clamp(32px, 9vw, 52px); font-weight: 900; text-shadow: 0 4px 0 #0b7bb0, 0 0 30px rgba(80,220,255,.5); }
+  .big { font-size: clamp(44px, 12vw, 70px); font-weight: 900; line-height: 1; }
+  .lbl { font-size: 13px; font-weight: 800; opacity: .8; letter-spacing: 2px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .newbest { color: #ffe27a; font-weight: 900; font-size: 18px; animation: pulse 1s infinite; }
+  #err { position: absolute; inset: 0; display: grid; place-items: center; padding: 30px; text-align: center; background: #0a3a5c; font-weight: 800; font-size: 18px; pointer-events: auto; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="ui">
+  <div id="hud" class="hidden">
+    <div class="top">
+      <div><div id="score">0</div><div id="lvl">LEVEL 1</div></div>
+      <div class="mid">
+        <div id="chain" class="glass"></div>
+        <div id="growWrap"><div id="grow"></div><div class="mark" id="m1"></div><div class="mark" id="m2"></div></div>
+      </div>
+      <div class="right">
+        <div id="lives">❤️❤️❤️</div>
+        <button id="btnPause" class="iconbtn glass" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg></button>
+      </div>
+    </div>
+    <button id="dash" class="hidden" aria-label="Ngebut">⚡</button>
+  </div>
+  <div id="combo"></div>
+  <div id="flash"></div>
+  <div id="toast"></div>
+  <div id="hint" class="glass hidden"></div>
+
+  <div id="menu" class="screen menu">
+    <div class="col">
+      <div class="title">SHAFA<br><span>SEA</span><small>3D</small></div>
+      <div class="sub">Kamu adalah <b>Shafa</b>, ikan kecil yang lapar! Makan ikan yang lebih kecil, kabur dari yang besar 🐟</div>
+    </div>
+    <div class="col">
+      <button id="btnPlay" class="bigbtn">▶ MAIN</button>
+      <div id="menuBest" class="best"></div>
+      <div id="ctrlHint" class="ctrl glass"></div>
+      <div class="row"><a class="smallbtn" href="index.html">← Game lain</a></div>
+      <a class="by" href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener">by @shafaauray</a>
+    </div>
+  </div>
+
+  <div id="pause" class="screen dim hidden">
+    <div class="h2">PAUSE</div>
+    <button id="btnResume" class="bigbtn">▶ LANJUT</button>
+    <button id="btnPauseMenu" class="smallbtn">Menu</button>
+  </div>
+
+  <div id="over" class="screen dim hidden">
+    <div class="h2">DIMAKAN! 😵</div>
+    <div class="card">
+      <div class="lbl">SKOR</div>
+      <div id="overScore" class="big">0</div>
+      <div id="overInfo" style="font-weight:800"></div>
+      <div id="overNew" class="newbest hidden">★ REKOR BARU! ★</div>
+    </div>
+    <button id="btnAgain" class="bigbtn">↻ MAIN LAGI</button>
+    <div class="row"><button id="btnMenu" class="smallbtn">Menu</button><a class="smallbtn" href="index.html">← Game lain</a></div>
+    <a class="by" href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener">by @shafaauray</a>
+  </div>
+
+  <div id="credit" class="hidden">by @shafaauray</div>
+</div>
+
+<script>
+'use strict';
+// =====================================================================
+//  SHAFA SEA 3D — eat-or-be-eaten fish game · by @shafaauray
+//  Single file, pure WebGL (no libraries)
+// =====================================================================
+const $ = id => document.getElementById(id);
+const canvas = $('gl');
+const DPR0 = Math.min(window.devicePixelRatio || 1, 2);
+const gl = canvas.getContext('webgl', { antialias: DPR0 < 1.5, alpha: false, powerPreference: 'high-performance' })
+        || canvas.getContext('experimental-webgl');
+if (!gl) { $('ui').innerHTML = '<div id="err">Browser kamu belum mendukung WebGL 😢<br>Coba pakai Chrome atau Safari terbaru.</div>'; throw new Error('No WebGL'); }
+canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); setTimeout(() => location.reload(), 300); });
+
+// ---------- Utils ----------
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+function hx(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
+const shade = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let R = Math.random;
+const rr = (a, b) => a + (b - a) * R();
+const pick = arr => arr[Math.floor(R() * arr.length)];
+const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+// ---------- Matrices ----------
+const mat = () => new Float32Array(16);
+const cp = (d, s) => { d.set(s); return d; };
+function ident(m) { m.fill(0); m[0] = m[5] = m[10] = m[15] = 1; return m; }
+const _mt = mat();
+function mul(out, a, b) {
+  const o = _mt;
+  for (let c = 0; c < 4; c++) {
+    const b0 = b[c * 4], b1 = b[c * 4 + 1], b2 = b[c * 4 + 2], b3 = b[c * 4 + 3];
+    o[c * 4] = a[0] * b0 + a[4] * b1 + a[8] * b2 + a[12] * b3; o[c * 4 + 1] = a[1] * b0 + a[5] * b1 + a[9] * b2 + a[13] * b3;
+    o[c * 4 + 2] = a[2] * b0 + a[6] * b1 + a[10] * b2 + a[14] * b3; o[c * 4 + 3] = a[3] * b0 + a[7] * b1 + a[11] * b2 + a[15] * b3;
+  }
+  out.set(o); return out;
+}
+function translate(m, x, y, z) { m[12] += m[0] * x + m[4] * y + m[8] * z; m[13] += m[1] * x + m[5] * y + m[9] * z; m[14] += m[2] * x + m[6] * y + m[10] * z; m[15] += m[3] * x + m[7] * y + m[11] * z; return m; }
+function rotX(m, a) { const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const y = m[4 + i], z = m[8 + i]; m[4 + i] = y * c + z * s; m[8 + i] = z * c - y * s; } return m; }
+function rotY(m, a) { const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const x = m[i], z = m[8 + i]; m[i] = x * c - z * s; m[8 + i] = x * s + z * c; } return m; }
+function rotZ(m, a) { const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const x = m[i], y = m[4 + i]; m[i] = x * c + y * s; m[4 + i] = y * c - x * s; } return m; }
+function scale(m, x, y, z) { for (let i = 0; i < 4; i++) { m[i] *= x; m[4 + i] *= y; m[8 + i] *= z; } return m; }
+function perspective(m, fovy, asp, n, f) { const t = 1 / Math.tan(fovy / 2); m.fill(0); m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f); return m; }
+function lookAt(m, e, t) {
+  let zx = e[0] - t[0], zy = e[1] - t[1], zz = e[2] - t[2]; let l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+  let xx = zz, xz = -zx; l = Math.hypot(xx, xz) || 1; xx /= l; xz /= l; const xy = 0;
+  const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  m[0] = xx; m[1] = yx; m[2] = zx; m[3] = 0; m[4] = xy; m[5] = yy; m[6] = zy; m[7] = 0; m[8] = xz; m[9] = yz; m[10] = zz; m[11] = 0;
+  m[12] = -(xx * e[0] + xy * e[1] + xz * e[2]); m[13] = -(yx * e[0] + yy * e[1] + yz * e[2]); m[14] = -(zx * e[0] + zy * e[1] + zz * e[2]); m[15] = 1; return m;
+}
+function T(x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, rx = 0, rz = 0) { const m = ident(mat()); translate(m, x, y, z); if (ry) rotY(m, ry); if (rx) rotX(m, rx); if (rz) rotZ(m, rz); return scale(m, sx, sy, sz); }
+
+// ---------- Geometry builder ----------
+const BOX_FACES = [
+  [[1, 0, 0], [[.5, -.5, .5], [.5, -.5, -.5], [.5, .5, -.5], [.5, .5, .5]]], [[-1, 0, 0], [[-.5, -.5, -.5], [-.5, -.5, .5], [-.5, .5, .5], [-.5, .5, -.5]]],
+  [[0, 1, 0], [[-.5, .5, .5], [.5, .5, .5], [.5, .5, -.5], [-.5, .5, -.5]]], [[0, -1, 0], [[-.5, -.5, -.5], [.5, -.5, -.5], [.5, -.5, .5], [-.5, -.5, .5]]],
+  [[0, 0, 1], [[-.5, -.5, .5], [.5, -.5, .5], [.5, .5, .5], [-.5, .5, .5]]], [[0, 0, -1], [[.5, -.5, -.5], [-.5, -.5, -.5], [-.5, .5, -.5], [.5, .5, -.5]]],
+];
+class Geo {
+  constructor() { this.a = []; }
+  v(m, p, n, c, e) {
+    const a = this.a, x = p[0], y = p[1], z = p[2];
+    a.push(m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m[5] * y + m[9] * z + m[13], m[2] * x + m[6] * y + m[10] * z + m[14]);
+    const tx = m[0] * n[0] + m[4] * n[1] + m[8] * n[2], ty = m[1] * n[0] + m[5] * n[1] + m[9] * n[2], tz = m[2] * n[0] + m[6] * n[1] + m[10] * n[2];
+    const l = Math.hypot(tx, ty, tz) || 1; a.push(tx / l, ty / l, tz / l, c[0], c[1], c[2], e);
+  }
+  tp(m, p) { return [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]]; }
+  triW(a, b, d, c, e, ct) { // world-space flat triangle; normal points away from ct (or up if ct null)
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = d[0] - a[0], vy = d[1] - a[1], vz = d[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+    let flip;
+    if (ct) { const gx = (a[0] + b[0] + d[0]) / 3 - ct[0], gy = (a[1] + b[1] + d[1]) / 3 - ct[1], gz = (a[2] + b[2] + d[2]) / 3 - ct[2]; flip = nx * gx + ny * gy + nz * gz < 0; }
+    else flip = ny < 0;
+    if (flip) { nx = -nx; ny = -ny; nz = -nz; }
+    for (const p of [a, b, d]) this.a.push(p[0], p[1], p[2], nx, ny, nz, c[0], c[1], c[2], e);
+  }
+  triF(m, p0, p1, p2, c, e, center) { this.triW(this.tp(m, p0), this.tp(m, p1), this.tp(m, p2), c, e, this.tp(m, center)); }
+  box(m, c, e = 0) { for (const [n, q] of BOX_FACES) { this.v(m, q[0], n, c, e); this.v(m, q[1], n, c, e); this.v(m, q[2], n, c, e); this.v(m, q[0], n, c, e); this.v(m, q[2], n, c, e); this.v(m, q[3], n, c, e); } }
+  cyl(m, c, e = 0, seg = 10) {
+    for (let i = 0; i < seg; i++) {
+      const a0 = i / seg * Math.PI * 2, a1 = (i + 1) / seg * Math.PI * 2;
+      const c0 = Math.cos(a0) * .5, s0 = Math.sin(a0) * .5, c1 = Math.cos(a1) * .5, s1 = Math.sin(a1) * .5, n0 = [c0, 0, s0], n1 = [c1, 0, s1];
+      this.v(m, [c0, -.5, s0], n0, c, e); this.v(m, [c1, -.5, s1], n1, c, e); this.v(m, [c1, .5, s1], n1, c, e);
+      this.v(m, [c0, -.5, s0], n0, c, e); this.v(m, [c1, .5, s1], n1, c, e); this.v(m, [c0, .5, s0], n0, c, e);
+      this.v(m, [0, .5, 0], [0, 1, 0], c, e); this.v(m, [c0, .5, s0], [0, 1, 0], c, e); this.v(m, [c1, .5, s1], [0, 1, 0], c, e);
+    }
+  }
+  cone(m, c, e = 0, seg = 8) {
+    for (let i = 0; i < seg; i++) {
+      const a0 = i / seg * Math.PI * 2, a1 = (i + 1) / seg * Math.PI * 2, am = (a0 + a1) / 2;
+      this.v(m, [Math.cos(a0) * .5, -.5, Math.sin(a0) * .5], [Math.cos(a0), .5, Math.sin(a0)], c, e);
+      this.v(m, [Math.cos(a1) * .5, -.5, Math.sin(a1) * .5], [Math.cos(a1), .5, Math.sin(a1)], c, e);
+      this.v(m, [0, .5, 0], [Math.cos(am), .5, Math.sin(am)], c, e);
+    }
+  }
+  sphere(m, c, e = 0, seg = 10) {
+    const rows = Math.max(4, seg >> 1);
+    const P = (i, j) => { const th = i / rows * Math.PI, ph = j / seg * Math.PI * 2; return [Math.sin(th) * Math.cos(ph) * .5, Math.cos(th) * .5, Math.sin(th) * Math.sin(ph) * .5]; };
+    const N = p => [p[0] * 2, p[1] * 2, p[2] * 2];
+    for (let i = 0; i < rows; i++) for (let j = 0; j < seg; j++) {
+      const a = P(i, j), b = P(i + 1, j), d = P(i + 1, j + 1), f = P(i, j + 1);
+      this.v(m, a, N(a), c, e); this.v(m, b, N(b), c, e); this.v(m, d, N(d), c, e);
+      this.v(m, a, N(a), c, e); this.v(m, d, N(d), c, e); this.v(m, f, N(f), c, e);
+    }
+  }
+  // sphere with a per-vertex color function (for gradients / bellies)
+  sphereC(m, colFn, e = 0, seg = 14) {
+    const rows = Math.max(4, seg >> 1);
+    const P = (i, j) => { const th = i / rows * Math.PI, ph = j / seg * Math.PI * 2; return [Math.sin(th) * Math.cos(ph) * .5, Math.cos(th) * .5, Math.sin(th) * Math.sin(ph) * .5]; };
+    const N = p => [p[0] * 2, p[1] * 2, p[2] * 2];
+    for (let i = 0; i < rows; i++) for (let j = 0; j < seg; j++) {
+      const a = P(i, j), b = P(i + 1, j), d = P(i + 1, j + 1), f = P(i, j + 1);
+      for (const p of [a, b, d, a, d, f]) this.v(m, p, N(p), colFn(p), e);
+    }
+  }
+  star(m, c, e = 0) {
+    const pts = [], O = [0, 0, 0];
+    for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2 - Math.PI / 2, r = i % 2 ? .22 : .5; pts.push([Math.cos(a) * r, -Math.sin(a) * r]); }
+    for (let i = 0; i < 10; i++) {
+      const p = pts[i], q = pts[(i + 1) % 10];
+      this.triF(m, [0, 0, .12], [p[0], p[1], .06], [q[0], q[1], .06], c, e, O);
+      this.triF(m, [0, 0, -.12], [q[0], q[1], -.06], [p[0], p[1], -.06], c, e, O);
+      this.triF(m, [p[0], p[1], .06], [q[0], q[1], .06], [q[0], q[1], -.06], c, e, O);
+      this.triF(m, [p[0], p[1], .06], [q[0], q[1], -.06], [p[0], p[1], -.06], c, e, O);
+    }
+  }
+  build() { const data = new Float32Array(this.a), buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW); return { buf, count: data.length / 10 }; }
+}
+
+// ---------- Shaders ----------
+const VS = `
+attribute vec3 aPos; attribute vec3 aNor; attribute vec4 aCol;
+uniform mat4 uVP; uniform mat4 uM; uniform float uTime, uSway, uSwayBase;
+varying vec3 vN; varying vec4 vC; varying vec3 vW;
+void main(){
+  vec4 w = uM * vec4(aPos, 1.0);
+  float k = uSway * abs(aPos.y - uSwayBase);
+  w.x += sin(uTime * 1.6 + w.x * 0.45 + w.z * 0.7) * k;
+  w.z += cos(uTime * 1.3 + w.x * 0.3) * k * 0.5;
+  vW = w.xyz; vN = mat3(uM[0].xyz, uM[1].xyz, uM[2].xyz) * aNor; vC = aCol;
+  gl_Position = uVP * w;
+}`;
+const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec3 vN; varying vec4 vC; varying vec3 vW;
+uniform vec3 uCam, uSun, uSunC, uSkyC, uGndC, uFogC;
+uniform float uFog, uAlpha, uEmis, uTime, uCaus;
+uniform vec4 uTint;
+void main(){
+  vec3 n = normalize(vN);
+  vec3 base = vC.rgb;
+  vec3 light = mix(uGndC, uSkyC, n.y * 0.5 + 0.5) + uSunC * max(dot(n, uSun), 0.0);
+  vec3 col = base * light;
+  vec2 p = vW.xz * 0.32 + vec2(vW.y * 0.1, 0.0);
+  float c = sin(p.x * 2.1 + uTime * 0.9) + sin(p.y * 2.7 - uTime * 0.7 + p.x) + sin((p.x + p.y) * 1.7 + uTime * 1.3);
+  col += pow(max(0.0, c / 3.0), 2.0) * uCaus * max(n.y, 0.0) * vec3(0.55, 0.9, 1.0);
+  col *= mix(0.6, 1.08, clamp((vW.y + 16.0) / 32.0, 0.0, 1.0));
+  vec3 dv = (uCam - vW) * 0.01; float d = length(dv) * 100.0; vec3 v = dv / max(length(dv), 1e-4);
+  col += pow(1.0 - max(dot(n, v), 0.0), 3.0) * 0.22 * vec3(0.5, 0.85, 1.0);
+  float e = clamp(vC.a + uEmis, 0.0, 1.0);
+  col = mix(col, base * 1.25, e);
+  col = mix(col, uTint.rgb, uTint.a);
+  float fd = d * uFog;
+  col = mix(col, uFogC, clamp(1.0 - exp(-fd * fd), 0.0, 0.92));
+  gl_FragColor = vec4(col, uAlpha);
+}`;
+const BG_VS = `attribute vec2 aPos; varying vec2 vP; void main(){ vP = aPos; gl_Position = vec4(aPos, 0.999, 1.0); }`;
+const BG_FS = `
+precision mediump float;
+varying vec2 vP; uniform vec3 uTop, uBot; uniform float uTime, uAsp, uCamX, uCamY;
+void main(){
+  float y = vP.y * 0.5 + 0.5 + uCamY * 0.012;
+  vec3 c = mix(uBot, uTop, smoothstep(0.0, 1.0, y));
+  float x = vP.x * uAsp + uCamX * 0.02;
+  float r = 0.0;
+  r += pow(max(0.0, sin(x * 3.1 + vP.y * 1.2 + uTime * 0.25)), 8.0);
+  r += pow(max(0.0, sin(x * 5.3 - vP.y * 0.8 + uTime * 0.18 + 1.7)), 10.0) * 0.8;
+  r += pow(max(0.0, sin(x * 1.7 + vP.y * 0.6 - uTime * 0.12 + 4.0)), 6.0) * 0.6;
+  c += vec3(0.55, 0.9, 1.0) * r * 0.16 * smoothstep(0.1, 1.0, y);
+  c += vec3(0.7, 0.95, 1.0) * smoothstep(0.85, 1.0, y) * 0.25;
+  gl_FragColor = vec4(c, 1.0);
+}`;
+const TX_VS = `attribute vec3 aPos; attribute vec2 aUV; uniform mat4 uVP, uM; varying vec2 vUV; varying vec3 vW;
+void main(){ vec4 w = uM * vec4(aPos, 1.0); vW = w.xyz; vUV = aUV; gl_Position = uVP * w; }`;
+const TX_FS = `precision mediump float; varying vec2 vUV; varying vec3 vW; uniform sampler2D uTex; uniform vec3 uCam, uFogC; uniform float uFog;
+void main(){ vec4 t = texture2D(uTex, vUV); if (t.a < 0.1) discard; float d = length((uCam - vW) * 0.01) * 100.0 * uFog;
+  vec3 col = mix(t.rgb, uFogC, clamp(1.0 - exp(-d * d), 0.0, 0.92)); gl_FragColor = vec4(col, 1.0); }`;
+function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+function program(vs, fs, attrs) {
+  const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  attrs.forEach((a, i) => gl.bindAttribLocation(p, i, a)); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const U = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); U[info.name] = gl.getUniformLocation(p, info.name); }
+  return { p, U };
+}
+const MAIN = program(VS, FS, ['aPos', 'aNor', 'aCol']), U = MAIN.U;
+const BG = program(BG_VS, BG_FS, ['aPos']);
+const TX = program(TX_VS, TX_FS, ['aPos', 'aUV']);
+const bgBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bgBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+
+// ---------- World ----------
+const WX = 40, SURF = 12.5, FLOOR = -12.2;
+const LIGHT = {
+  sun: (() => { const v = [0.25, 1, 0.35], l = Math.hypot(...v); return v.map(x => x / l); })(),
+  sunC: [0.95, 1.0, 0.95], skyC: [0.5, 0.68, 0.8], gndC: [0.2, 0.3, 0.38],
+  fog: hx('#0e5a85'), top: hx('#2bb3e0'), bot: hx('#06294a'),
+};
+function seabedY(x, z) {
+  let y = -13.6 + 0.6 * Math.sin(x * 0.21 + z * 0.13) + 0.45 * Math.sin(x * 0.47 - z * 0.31) + 0.25 * Math.sin(z * 0.8 + x * 0.1);
+  if (z < -18) y += (-18 - z) * 0.22;
+  if (z > 4) y -= (z - 4) * 0.4;
+  return y;
+}
+const CORAL = ['#ff6f91', '#ff9671', '#ffc75f', '#f9f871', '#c56cf0', '#ff5e7e', '#ff8fd0', '#7ef0c8'];
+function buildScene() {
+  const g = new Geo(), sw = new Geo(); R = mulberry(2024);
+  // seabed heightfield (faceted low-poly)
+  const x0 = -80, x1 = 80, z0 = -50, z1 = 10, dx = 2.5, dz = 2;
+  const H = (x, z) => [x, seabedY(x, z), z];
+  for (let x = x0; x < x1; x += dx) for (let z = z0; z < z1; z += dz) {
+    const a = H(x, z), b = H(x + dx, z), c = H(x + dx, z + dz), d = H(x, z + dz);
+    const k = 0.9 + 0.12 * Math.sin(x * 1.3 + z * 0.7) + (R() - 0.5) * 0.06;
+    const sand = shade(hx('#e3cf9f'), k), sand2 = shade(hx('#d6bf8c'), k);
+    g.triW(a, b, c, sand, 0, null); g.triW(a, c, d, sand2, 0, null);
+  }
+  // back rock walls
+  for (let i = 0; i < 26; i++) {
+    const x = rr(-80, 80), z = rr(-48, -32), y = seabedY(x, z), s = rr(6, 14);
+    g.sphere(T(x, y + s * 0.3, z, s * rr(1, 1.8), s * rr(0.9, 1.8), s), shade(hx('#3b6f8a'), rr(0.8, 1.1)), 0, 7);
+  }
+  // rocks
+  for (let i = 0; i < 55; i++) {
+    const x = rr(-75, 75), z = rr(-28, -3), y = seabedY(x, z), s = rr(0.8, 3.2);
+    g.sphere(T(x, y + s * 0.2, z, s * rr(1, 1.6), s * rr(0.6, 1), s), shade(hx('#6f8796'), rr(0.75, 1.1)), 0, 7);
+  }
+  // corals
+  for (let i = 0; i < 90; i++) {
+    const x = rr(-75, 75), z = rr(-24, -2.5), y = seabedY(x, z), col = hx(pick(CORAL)), t = R();
+    if (t < 0.3) { // branch coral
+      const h = rr(1.2, 2.8);
+      g.cyl(T(x, y + h / 2, z, 0.35, h, 0.35), col, 0.05, 7);
+      for (let b = 0; b < 4; b++) {
+        const a = b * 1.57 + rr(-0.3, 0.3), l = rr(0.8, 1.6), by = y + h * rr(0.4, 0.9), tilt = rr(0.5, 0.9);
+        const bx = x + Math.cos(a) * l * 0.4, bz = z + Math.sin(a) * l * 0.4;
+        g.cyl(T(bx, by + l * 0.3, bz, 0.25, l, 0.25, -a, 0, tilt), col, 0.05, 6);
+        g.sphere(T(bx + Math.cos(a) * l * 0.35, by + l * 0.72, bz + Math.sin(a) * l * 0.35, 0.36, 0.36, 0.36), shade(col, 1.2), 0.25, 6);
+      }
+      g.sphere(T(x, y + h, z, 0.5, 0.5, 0.5), shade(col, 1.2), 0.25, 6);
+    } else if (t < 0.5) { // brain coral
+      const s = rr(1, 2.2); g.sphere(T(x, y + s * 0.25, z, s, s * 0.6, s), col, 0.05, 10);
+    } else if (t < 0.72) { // tube coral cluster
+      for (let k = 0; k < 5; k++) { const h = rr(0.7, 2.2), ox = rr(-0.6, 0.6), oz = rr(-0.6, 0.6);
+        g.cyl(T(x + ox, y + h / 2, z + oz, 0.32, h, 0.32), col, 0.05, 8); g.cyl(T(x + ox, y + h, z + oz, 0.36, 0.08, 0.36), shade(col, 1.3), 0.5, 8); }
+    } else if (t < 0.85) { // fan coral
+      const s = rr(1.6, 3); g.sphere(T(x, y + s * 0.5, z, s, s, 0.12), col, 0.08, 10); g.cyl(T(x, y + 0.3, z, 0.15, 0.6, 0.15), shade(col, 0.7), 0, 6);
+    } else { // anemone (swaying)
+      sw.sphere(T(x, y + 0.2, z, 0.9, 0.4, 0.9), hx('#ff8fd0'), 0.1, 8);
+      for (let k = 0; k < 9; k++) { const a = k / 9 * 6.28; sw.cyl(T(x + Math.cos(a) * 0.3, y + 0.75, z + Math.sin(a) * 0.3, 0.09, 1.1, 0.09), hx('#ffc2e6'), 0.3, 5); }
+    }
+  }
+  // seaweed (swaying)
+  for (let i = 0; i < 80; i++) {
+    const x = rr(-75, 75), z = rr(-22, -1.5), y = seabedY(x, z), n = 2 + Math.floor(R() * 3);
+    const col = hx(pick(['#3fbf6f', '#2fa86a', '#5ed37a', '#6bbf3a']));
+    for (let s = 0; s < n; s++) {
+      const ox = rr(-0.5, 0.5), oz = rr(-0.4, 0.4), h = rr(3, 8), segs = 7;
+      for (let k = 0; k < segs; k++) {
+        const w = 0.42 * (1 - k / segs * 0.6), sh = h / segs;
+        sw.box(T(x + ox + Math.sin(k * 0.9 + s) * 0.15, y + sh * (k + 0.5), z + oz, w, sh * 1.05, 0.08, s * 0.7), shade(col, 0.85 + k * 0.04));
+      }
+    }
+  }
+  // sunken ship
+  const sx = 26, sz = -30, sy = seabedY(sx, sz) + 1.6;
+  g.box(T(sx, sy, sz, 18, 4, 6, 0.15, 0, 0.12), hx('#5a3a2a'));
+  g.box(T(sx - 1, sy + 2.3, sz, 15, 0.4, 5.6, 0.15, 0, 0.12), hx('#7a5238'));
+  g.cyl(T(sx - 2, sy + 7, sz, 0.5, 10, 0.5, 0, 0, 0.35), hx('#4a3020'), 0, 8);
+  g.box(T(sx - 3.4, sy + 8, sz, 0.15, 4, 3.4, 0.15, 0, 0.35), hx('#d9d0b8'));
+  // treasure chest next to the sign
+  const cx = -2.6, cz = -4.5, cy = seabedY(cx, cz);
+  g.box(T(cx, cy + 0.55, cz, 1.8, 1.1, 1.1, 0.25), hx('#8a5a2e'));
+  g.box(T(cx, cy + 0.55, cz, 1.84, 0.16, 1.14, 0.25), hx('#ffcf4d'), 0.4);
+  g.box(T(cx - 0.12, cy + 1.45, cz - 0.42, 1.8, 0.2, 1.1, 0.25, -0.9), hx('#9a6838'));
+  for (let k = 0; k < 9; k++) g.cyl(T(cx + rr(-0.6, 0.6), cy + 1.12 + rr(0, 0.15), cz + rr(-0.35, 0.35), 0.28, 0.06, 0.28, 0, rr(-0.4, 0.4)), hx('#ffd84d'), 0.75, 8);
+  g.sphere(T(cx + 0.4, cy + 1.25, cz, 0.3, 0.3, 0.3), hx('#e8f6ff'), 0.6, 8);
+  // sign posts
+  const px = -7, pz = -5.2, py = seabedY(px, pz);
+  for (const ox of [-1.7, 1.7]) g.box(T(px + ox, py + 1.3, pz - 0.05, 0.22, 2.9, 0.22), hx('#6b4a2b'));
+  R = Math.random;
+  return { decor: g.build(), sway: sw.build(), sign: { x: px, y: py + 2.25, z: pz } };
+}
+
+// ---------- Fish models ----------
+const FT = {
+  minnow:    { len: 0.55, pts: 10,  grow: 1, speed: 3.0, flee: true,  h: 0.34, w: 0.26, col: '#9fd8ff', belly: '#eef9ff', fin: '#5fb8ff', stripes: [], eye: 0.17 },
+  clown:     { len: 0.85, pts: 20,  grow: 2, speed: 2.6, flee: true,  h: 0.5,  w: 0.34, col: '#ff8a2a', belly: '#ffb46a', fin: '#ff6a00', stripes: [[0.18, '#ffffff'], [-0.12, '#ffffff']], eye: 0.17 },
+  tang:      { len: 1.25, pts: 35,  grow: 3, speed: 2.7, flee: true,  h: 0.72, w: 0.24, col: '#ffd93b', belly: '#fff08a', fin: '#ffb800', stripes: [], eye: 0.14 },
+  angel:     { len: 1.6,  pts: 50,  grow: 4, speed: 2.3, flee: false, h: 0.8,  w: 0.22, col: '#9b6cff', belly: '#d6c2ff', fin: '#ffd24a', stripes: [[0.12, '#3a2a7a'], [-0.1, '#3a2a7a']], eye: 0.13, tallFin: true },
+  barracuda: { len: 2.5,  pts: 80,  grow: 6, speed: 3.3, aggro: true, h: 0.24, w: 0.2, col: '#7fae9c', belly: '#e1f0e8', fin: '#4d7d6c', stripes: [[0.15, '#3f6a5c'], [0, '#3f6a5c'], [-0.15, '#3f6a5c']], eye: 0.1 },
+  grouper:   { len: 3.4,  pts: 150, grow: 8, speed: 2.0, aggro: true, h: 0.55, w: 0.42, col: '#a8714a', belly: '#e8c49a', fin: '#7a4a2a', stripes: [], eye: 0.1, spots: '#5a3a22' },
+  shark:     { len: 5.2,  pts: 0,   grow: 0, speed: 3.2, aggro: true, inedible: true, h: 0.3, w: 0.28, col: '#7d8fa3', belly: '#f2f5f8', fin: '#5f7186', stripes: [], eye: 0.07, shark: true },
+  shafa:     { len: 1, h: 0.5, w: 0.38, col: '#ff6fae', belly: '#ffd0e6', fin: '#3fe0d0', stripes: [[0.05, '#3fe0d0']], eye: 0.22 },
+};
+const KINDS = ['minnow', 'clown', 'tang', 'angel', 'barracuda', 'grouper'];
+function buildFish(s) {
+  const body = new Geo(), tail = new Geo(), col = hx(s.col), belly = hx(s.belly), fin = hx(s.fin);
+  body.sphereC(T(0, 0, 0, 1, s.h, s.w), p => p[1] < -0.1 ? belly : p[1] < 0.02 ? [(col[0] + belly[0]) / 2, (col[1] + belly[1]) / 2, (col[2] + belly[2]) / 2] : col, 0, 16);
+  for (const [x, c] of s.stripes) { const r = Math.sqrt(Math.max(0.05, 1 - (2 * x) ** 2)); body.sphere(T(x, 0, 0, 0.07, s.h * r * 1.03, s.w * r * 1.04), hx(c), 0.05, 14); }
+  if (s.spots) for (let i = 0; i < 14; i++) { const x = (Math.random() - 0.5) * 0.7, a = Math.random() * 6.28, r = Math.sqrt(1 - (2 * x) ** 2) * 0.5;
+    body.sphere(T(x, Math.sin(a) * r * s.h * 0.98, Math.cos(a) * r * s.w * 0.98, 0.06, 0.06, 0.06), hx(s.spots), 0, 6); }
+  // eyes
+  const ez = s.w * 0.36, ex = 0.3, ey = s.h * 0.12, es = s.eye;
+  for (const sz of [-1, 1]) {
+    body.sphere(T(ex, ey, sz * ez, es, es, es * 0.7), [1, 1, 1], 0.15, 10);
+    body.sphere(T(ex + es * 0.12, ey, sz * (ez + es * 0.25), es * 0.55, es * 0.6, es * 0.4), hx('#10131c'), 0, 8);
+    body.sphere(T(ex + es * 0.2, ey + es * 0.18, sz * (ez + es * 0.36), es * 0.18, es * 0.18, es * 0.12), [1, 1, 1], 1, 6);
+  }
+  // mouth
+  body.box(T(0.48, -s.h * 0.06, 0, 0.06, s.h * 0.08, s.w * 0.35), shade(col, 0.5));
+  // dorsal fin
+  const dh = s.shark ? 0.55 : s.tallFin ? 0.6 : 0.28, O = [0, 0, 0];
+  body.triF(ident(mat()), [0.12, s.h * 0.42, 0], [-0.22, s.h * 0.42, 0], [-0.12 + (s.shark ? 0.02 : -0.1), s.h * 0.42 + dh * (s.shark ? 1.1 : 0.8), 0], fin, 0.05, [0, 0, -1]);
+  if (s.tallFin) body.triF(ident(mat()), [0.05, -s.h * 0.42, 0], [-0.25, -s.h * 0.42, 0], [-0.3, -s.h * 0.42 - 0.55, 0], fin, 0.05, [0, 0, -1]);
+  // pectoral fins
+  for (const sz of [-1, 1]) body.sphere(T(0.05, -s.h * 0.15, sz * s.w * 0.48, 0.22, 0.05, 0.14, 0, 0, -0.5), fin, 0.05, 8);
+  // tail (pivot at origin, extends to -x)
+  const th = s.shark ? 0.5 : s.h * 0.75 + 0.1;
+  tail.triF(ident(mat()), [0.02, 0, 0], [-0.36, th * 0.62, 0], [-0.24, 0, 0], fin, 0.08, [0, 0, -1]);
+  tail.triF(ident(mat()), [0.02, 0, 0], [-0.24, 0, 0], [-0.36, -th * (s.shark ? 0.35 : 0.62), 0], fin, 0.08, [0, 0, -1]);
+  tail.sphere(T(-0.02, 0, 0, 0.14, s.h * 0.35, s.w * 0.35), col, 0, 8);
+  return { body: body.build(), tail: tail.build(), spec: s };
+}
+function buildJelly() {
+  const g = new Geo();
+  g.sphereC(T(0, 0.2, 0, 1.3, 0.9, 1.3), p => p[1] > 0.1 ? hx('#ff9de0') : hx('#ffd0f2'), 0.35, 14);
+  for (let k = 0; k < 8; k++) { const a = k / 8 * 6.28; g.box(T(Math.cos(a) * 0.4, -0.9, Math.sin(a) * 0.4, 0.06, 1.8, 0.06), hx('#ffb3ea'), 0.5); }
+  return g.build();
+}
+function buildStar() { const g = new Geo(); g.star(T(0, 0, 0, 1, 1, 1), hx('#ffb03b'), 0.35); g.sphere(T(0, 0, 0.08, 0.15, 0.15, 0.08), hx('#fff3c0'), 0.8, 6); return g.build(); }
+function buildSimple(fn) { const g = new Geo(); fn(g); return g.build(); }
+
+// sign texture with the creator's name
+function makeSignTexture() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 256; const x = c.getContext('2d');
+  const r = 46;
+  x.fillStyle = '#6b4a2b'; x.beginPath(); x.roundRect ? x.roundRect(8, 8, 1008, 240, r) : x.rect(8, 8, 1008, 240); x.fill();
+  x.fillStyle = '#9a6a3c'; x.beginPath(); x.roundRect ? x.roundRect(24, 24, 976, 208, r - 12) : x.rect(24, 24, 976, 208); x.fill();
+  x.strokeStyle = 'rgba(70,40,20,.35)'; x.lineWidth = 4;
+  for (let i = 0; i < 5; i++) { x.beginPath(); x.moveTo(40, 60 + i * 36); x.bezierCurveTo(300, 50 + i * 36, 700, 75 + i * 36, 990, 58 + i * 36); x.stroke(); }
+  x.font = '900 132px system-ui, -apple-system, Segoe UI, Roboto, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillStyle = 'rgba(40,20,10,.5)'; x.fillText('@shafaauray', 516, 138);
+  x.fillStyle = '#fff3d6'; x.fillText('@shafaauray', 512, 130);
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return t;
+}
+const signQuad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, signQuad);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-.5, -.5, 0, 0, 1, .5, -.5, 0, 1, 1, .5, .5, 0, 1, 0, -.5, -.5, 0, 0, 1, .5, .5, 0, 1, 0, -.5, .5, 0, 0, 0]), gl.STATIC_DRAW);
+
+const SCENE = buildScene();
+const FISH = {}; for (const k in FT) FISH[k] = buildFish(FT[k]);
+const MESH = {
+  jelly: buildJelly(), star: buildStar(),
+  bubble: buildSimple(g => g.sphere(T(0, 0, 0), hx('#ffffff'), 0.3, 10)),
+  cube: buildSimple(g => g.box(T(0, 0, 0), [1, 1, 1], 0)),
+  surface: buildSimple(g => g.box(T(0, 0, -230, 400, 0.05, 520), hx('#bff6ff'), 0.6)),
+};
+const SIGN_TEX = makeSignTexture();
+
+// ---------- Audio ----------
+const AU = { ctx: null, master: null, sfx: null, music: null, noise: null, muted: load('ssMuted') === '1', musicOn: false, next: 0, step: 0 };
+function audioInit() {
+  try {
+    if (!AU.ctx) {
+      const A = window.AudioContext || window.webkitAudioContext; if (!A) return;
+      const c = AU.ctx = new A();
+      AU.master = c.createGain(); AU.master.gain.value = AU.muted ? 0 : 0.7; AU.master.connect(c.destination);
+      AU.sfx = c.createGain(); AU.sfx.gain.value = 0.9; AU.sfx.connect(AU.master);
+      AU.music = c.createGain(); AU.music.gain.value = 0.28; AU.music.connect(AU.master);
+      const len = c.sampleRate; AU.noise = c.createBuffer(1, len, c.sampleRate); const d = AU.noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (AU.ctx.state === 'suspended') AU.ctx.resume();
+  } catch (e) {}
+}
+function tone(type, f1, f2, dur, vol, t0 = 0, dest = AU.sfx, att = 0.008) {
+  const c = AU.ctx, t = t0 || c.currentTime, o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.03);
+}
+function noise(dur, vol, ftype, freq, t0 = 0, dest = AU.sfx) {
+  const c = AU.ctx, t = t0 || c.currentTime, s = c.createBufferSource(); s.buffer = AU.noise;
+  const f = c.createBiquadFilter(); f.type = ftype; f.frequency.value = freq; const g = c.createGain();
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.02);
+}
+function sfx(n, x = 0) {
+  if (!AU.ctx || AU.ctx.state !== 'running') return;
+  const now = AU.ctx.currentTime;
+  try {
+    switch (n) {
+      case 'eat': { const f = 330 * Math.pow(2, Math.min(x, 12) / 12); tone('square', f * 1.5, f * 0.6, 0.09, 0.07); tone('sine', f * 2, f * 3, 0.1, 0.08, now + 0.04); noise(0.06, 0.08, 'lowpass', 1500); break; }
+      case 'bubble': tone('sine', 500 + Math.random() * 400, 1400, 0.08, 0.04); break;
+      case 'grow': [0, 4, 7, 12, 16].forEach((s, i) => tone('triangle', 392 * Math.pow(2, s / 12), 392 * Math.pow(2, s / 12), 0.16, 0.1, now + i * 0.07)); break;
+      case 'level': [0, 4, 7, 12, 7, 12, 16].forEach((s, i) => tone('square', 523 * Math.pow(2, s / 12), 523 * Math.pow(2, s / 12), 0.14, 0.06, now + i * 0.09)); break;
+      case 'hurt': tone('sawtooth', 300, 60, 0.5, 0.18); noise(0.5, 0.25, 'lowpass', 900); break;
+      case 'chomp': noise(0.12, 0.25, 'lowpass', 700); tone('sine', 120, 50, 0.15, 0.25); break;
+      case 'dash': noise(0.35, 0.12, 'bandpass', 1200); tone('sine', 200, 700, 0.25, 0.06); break;
+      case 'zap': tone('sawtooth', 900, 200, 0.3, 0.08); tone('square', 1300, 300, 0.25, 0.04); break;
+      case 'star': [0, 7, 12, 19].forEach((s, i) => tone('sine', 880 * Math.pow(2, s / 12), 880 * Math.pow(2, s / 12), 0.2, 0.08, now + i * 0.05)); break;
+      case 'warn': tone('sawtooth', 110, 100, 0.6, 0.12); tone('sawtooth', 116, 104, 0.6, 0.1, now + 0.7); break;
+      case 'start': [0, 5, 9, 12].forEach((s, i) => tone('triangle', 440 * Math.pow(2, s / 12), 440 * Math.pow(2, s / 12), 0.14, 0.09, now + i * 0.08)); break;
+    }
+  } catch (e) {}
+}
+// calm underwater loop: Fmaj7 – Am7 – Dm7 – Bbmaj7
+const BPM = 96, STEP_T = 60 / BPM / 4;
+const PROG = [[53, 57, 60, 64], [57, 60, 64, 67], [50, 53, 57, 60], [46, 50, 53, 57]];
+const mf = m => 440 * Math.pow(2, (m - 69) / 12);
+function scheduleStep(i, t) {
+  const s = i % 16, ch = PROG[Math.floor(i / 16) % 4], M = AU.music;
+  if (s === 0) for (const n of ch) tone('sine', mf(n), mf(n), 2.3, 0.045, t, M, 0.4);
+  if (s % 4 === 0) tone('sine', 110, 45, 0.25, s === 0 ? 0.4 : 0.22, t, M);
+  if (s % 8 === 4) noise(0.12, 0.1, 'highpass', 2500, t, M);
+  if (s % 2 === 1) noise(0.03, 0.03, 'highpass', 8000, t, M);
+  if (s % 4 === 0 || s % 4 === 3) tone('triangle', mf(ch[0] - 24), mf(ch[0] - 24), 0.3, 0.2, t, M);
+  if ([0, 3, 6, 8, 10, 13].includes(s)) { const n = ch[(s * 3) % 4] + 12; tone('triangle', mf(n), mf(n), 0.22, 0.06, t, M); }
+  if (s === 14 && Math.random() < 0.6) tone('sine', mf(ch[3] + 24), mf(ch[3] + 24 + 5), 0.15, 0.03, t, M);
+}
+setInterval(() => { if (!AU.ctx || !AU.musicOn || AU.ctx.state !== 'running') return; while (AU.next < AU.ctx.currentTime + 0.12) { scheduleStep(AU.step, AU.next); AU.next += STEP_T; AU.step++; } }, 25);
+const musicStart = () => { if (!AU.ctx) return; AU.musicOn = true; AU.next = AU.ctx.currentTime + 0.05; };
+const musicStop = () => { AU.musicOn = false; };
+
+// ---------- Game state ----------
+const STAGE_LEN = [0.95, 1.85, 2.75];
+const STAGE_AT = [0, 12, 32], LEVEL_GOAL = 60;
+let state = 'menu', paused = false, time = 0;
+let level = 1, score = 0, lives = 3, growth = 0, stage = 0, combo = 0, comboT = 0, best = Number(load('ssBest')) || 0;
+let fishes = [], bubbles = [], particles = [], stars = [], jellies = [];
+let sharkT = 30, starT = 10, shake = 0, levelBanner = 0, runId = 0;
+const player = { x: 0, y: 0, vx: 0, vy: 0, len: STAGE_LEN[0], face: 1, yaw: 0, pitch: 0, tail: 0, inv: 0, stun: 0, dash: 0, dashCD: 0, chomp: 0, alive: true, respawn: 0 };
+const cam = { x: 0, y: 0, d: 18, halfW: 10, halfH: 7 };
+
+function spawnFish(kind, side) {
+  const s = FT[kind], dir = side !== undefined ? side : (Math.random() < 0.5 ? 1 : -1);
+  const x = clamp(cam.x - dir * (cam.halfW + 2 + Math.random() * 5 + s.len), -WX - 10, WX + 10);
+  const y = rr(FLOOR + s.len * 0.25 + 0.5, SURF - s.len * 0.25 - 0.5);
+  const sp = s.speed * rr(0.8, 1.15) * (1 + (level - 1) * 0.07);
+  fishes.push({ kind, s, mesh: FISH[kind], x, y, vx: dir * sp, vy: 0, dir, sp, len: s.len * rr(0.95, 1.05), face: dir, yaw: dir > 0 ? 0 : Math.PI,
+    pitch: 0, tail: Math.random() * 6, ph: Math.random() * 6, chase: 0, chaseCD: 0, chomp: 0 });
+}
+function weightsFor(st) {
+  return st === 0 ? [35, 30, 15, 8, 7, 5] : st === 1 ? [14, 20, 26, 20, 12, 8] : [8, 10, 18, 22, 25, 17];
+}
+function pickKind() {
+  const w = weightsFor(stage), sum = w.reduce((a, b) => a + b, 0); let r = Math.random() * sum;
+  for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) return KINDS[i]; } return 'minnow';
+}
+function resetGame() {
+  level = 1; score = 0; lives = 3; fishes = []; bubbles = []; particles = []; stars = []; jellies = [];
+  sharkT = 35; starT = 8; startLevel(true);
+}
+function startLevel(first) {
+  growth = 0; stage = 0; combo = 0; comboT = 0;
+  Object.assign(player, { x: cam.x, y: cam.y, vx: 0, vy: 0, len: STAGE_LEN[0], inv: 2.5, stun: 0, dash: 0, dashCD: 0, alive: true, respawn: 0 });
+  jellies = [];
+  if (level >= 2) for (let i = 0; i < Math.min(4, level); i++) jellies.push({ x: rr(-WX + 5, WX - 5), y: rr(-6, 8), ph: Math.random() * 6, vy: 0 });
+  levelBanner = 2.2;
+  toast(first ? 'AYO MAKAN! 🐟' : 'LEVEL ' + level + '!', first ? '#8ff7ff' : '#ffe14d');
+  refreshChain(); updateHUD(true);
+}
+
+// ---------- Helpers ----------
+const canEat = f => !f.s.inedible && f.len < player.len * 0.92;
+const isDanger = f => f.len > player.len * 1.08;
+function addBubble(x, y, z, s) { if (bubbles.length < 90) bubbles.push({ x, y, z, s, vy: rr(1.2, 2.4), ph: Math.random() * 6, life: rr(2, 4) }); }
+function addBits(x, y, col, n, pw) {
+  for (let i = 0; i < n && particles.length < 140; i++) { const a = Math.random() * 6.28, s = rr(1, pw);
+    particles.push({ x, y, z: rr(-0.3, 0.3), vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rr(0.4, 0.8), max: 0.8, col, size: rr(0.06, 0.14) }); }
+}
+function growTo() {
+  let st = 0; for (let i = STAGE_AT.length - 1; i >= 0; i--) if (growth >= STAGE_AT[i]) { st = i; break; }
+  if (st > stage) { stage = st; sfx('grow'); toast('MAKIN BESAR! ⬆', '#7dffcf'); refreshChain(); for (let i = 0; i < 14; i++) addBubble(player.x + rr(-1, 1), player.y + rr(-1, 1), rr(-0.5, 0.5), rr(0.1, 0.25)); }
+}
+function targetLen() {
+  const next = STAGE_AT[stage + 1] !== undefined ? STAGE_AT[stage + 1] : LEVEL_GOAL;
+  const t = clamp((growth - STAGE_AT[stage]) / (next - STAGE_AT[stage]), 0, 1);
+  return STAGE_LEN[stage] * (1 + t * 0.1);
+}
+function eat(f) {
+  f.dead = true;
+  combo++; comboT = 1.8;
+  const mult = combo >= 8 ? 3 : combo >= 4 ? 2 : 1;
+  score += f.s.pts * mult * level; growth += f.s.grow;
+  player.chomp = 1; sfx('eat', combo);
+  addBits(f.x, f.y, hx(f.s.col), 10, 4); for (let i = 0; i < 4; i++) addBubble(f.x, f.y, 0, rr(0.08, 0.18));
+  if (combo === 4) toast('COMBO ×2!', '#ffe14d'); else if (combo === 8) toast('LAPAR BANGET! ×3 🔥', '#ff8fd0');
+  growTo();
+  if (growth >= LEVEL_GOAL) levelUp();
+}
+function levelUp() {
+  level++; score += 500 * (level - 1); sfx('level');
+  for (const f of fishes) if (Math.abs(f.x - player.x) < cam.halfW + 4) { f.vx = (f.x > player.x ? 1 : -1) * f.sp * 2.5; f.flee = 2; }
+  startLevel(false);
+}
+function hurt(byFish) {
+  if (player.inv > 0 || !player.alive) return;
+  lives--; player.alive = false; player.respawn = 1.6; shake = 0.7; combo = 0;
+  if (byFish) byFish.chomp = 1;
+  sfx('hurt'); flash(); addBits(player.x, player.y, hx('#ff6fae'), 24, 6);
+  for (let i = 0; i < 10; i++) addBubble(player.x + rr(-0.5, 0.5), player.y + rr(-0.5, 0.5), 0, rr(0.1, 0.25));
+  if (navigator.vibrate) try { navigator.vibrate([60, 40, 90]); } catch (e) {}
+  updateHUD(true);
+  if (lives <= 0) { const id = runId; setTimeout(() => { if (state === 'play' && id === runId) gameOver(); }, 1300); }
+}
+function tryDash() {
+  if (state !== 'play' || paused || !player.alive || player.dashCD > 0 || player.stun > 0) return;
+  player.dash = 0.45; player.dashCD = 2.2; sfx('dash');
+  for (let i = 0; i < 6; i++) addBubble(player.x - player.face * 0.5, player.y + rr(-0.3, 0.3), rr(-0.3, 0.3), rr(0.08, 0.16));
+}
+
+// ---------- Input ----------
+const keys = {};
+const mouse = { active: false, sx: 0, sy: 0, down: false };
+const JOY_R = 60;
+const joy = { active: false, id: null, sx: 0, sy: 0, x: 0, y: 0 };
+let touchMode = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase(); keys[k] = true;
+  if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(k)) e.preventDefault();
+  if (e.repeat) return;
+  touchMode = false;
+  if (state === 'menu' && (k === 'enter' || k === ' ')) { startRun(); return; }
+  if (state === 'over' && (k === 'enter' || k === 'r')) { startRun(); return; }
+  if (k === 'p' || k === 'escape') { setPause(!paused); return; }
+  if (k === ' ' || k === 'shift') tryDash();
+  if (['w', 'a', 's', 'd', 'arrowleft', 'arrowright', 'arrowup', 'arrowdown'].includes(k)) mouse.active = false;
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; joy.active = false; });
+canvas.addEventListener('pointerdown', e => {
+  audioInit();
+  if (e.pointerType === 'mouse') { touchMode = false; mouse.active = true; mouse.sx = e.clientX; mouse.sy = e.clientY; if (state === 'play') tryDash(); return; }
+  touchMode = true; showDashBtn();
+  if (!joy.active) { joy.active = true; joy.id = e.pointerId; joy.sx = joy.x = e.clientX; joy.sy = joy.y = e.clientY; }
+});
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType === 'mouse') { mouse.active = true; mouse.sx = e.clientX; mouse.sy = e.clientY; return; }
+  if (joy.active && e.pointerId === joy.id) {
+    joy.x = e.clientX; joy.y = e.clientY;
+    const dx = joy.x - joy.sx, dy = joy.y - joy.sy, d = Math.hypot(dx, dy);
+    if (d > JOY_R * 1.4) { const k = (d - JOY_R * 1.4) / d; joy.sx += dx * k; joy.sy += dy * k; }
+  }
+});
+const endP = e => { if (joy.active && e.pointerId === joy.id) joy.active = false; };
+canvas.addEventListener('pointerup', endP); canvas.addEventListener('pointercancel', endP);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('touchmove', e => { if (e.target === canvas) e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault());
+$('dash').addEventListener('pointerdown', e => { e.stopPropagation(); audioInit(); tryDash(); });
+function showDashBtn() { $('dash').classList.toggle('hidden', !(touchMode && state === 'play')); }
+
+// screen point -> world point on the z=0 plane
+const camEye = [0, 0, 18], camTgt = [0, 0, 0];
+let fov = 0.9, W = 0, H = 0;
+function screenToWorld(sx, sy) {
+  const nx = (sx / W) * 2 - 1, ny = 1 - (sy / H) * 2, asp = W / H, t = Math.tan(fov / 2);
+  let fx = camTgt[0] - camEye[0], fy = camTgt[1] - camEye[1], fz = camTgt[2] - camEye[2]; const fl = Math.hypot(fx, fy, fz); fx /= fl; fy /= fl; fz /= fl;
+  let rx = -fz, rz = fx; const rl = Math.hypot(rx, rz) || 1; rx /= rl; rz /= rl; const ry = 0;
+  const ux = ry * fz - rz * fy, uy = rz * fx - rx * fz, uz = rx * fy - ry * fx;
+  const dx = fx + rx * nx * t * asp + ux * ny * t, dy = fy + ry * nx * t * asp + uy * ny * t, dz = fz + rz * nx * t * asp + uz * ny * t;
+  const k = -camEye[2] / dz; return [camEye[0] + dx * k, camEye[1] + dy * k];
+}
+
+// ---------- Update ----------
+function updatePlayer(dt) {
+  const P = player;
+  if (!P.alive) {
+    P.respawn -= dt;
+    if (P.respawn <= 0 && lives > 0) { P.alive = true; P.inv = 2.5; P.x = cam.x; P.y = clamp(cam.y + 3, FLOOR + 2, SURF - 2); P.vx = P.vy = 0; }
+    return;
+  }
+  P.len = damp(P.len, targetLen(), 4, dt);
+  if (P.inv > 0) P.inv -= dt; if (P.dash > 0) P.dash -= dt; if (P.dashCD > 0) P.dashCD -= dt; if (P.stun > 0) P.stun -= dt;
+  const maxS = (7.5 + stage * 0.8) * (P.dash > 0 ? 2.3 : 1);
+  let tx = 0, ty = 0, use = false;
+  let kx = 0, ky = 0;
+  if (keys['a'] || keys['arrowleft']) kx -= 1; if (keys['d'] || keys['arrowright']) kx += 1;
+  if (keys['w'] || keys['arrowup']) ky += 1; if (keys['s'] || keys['arrowdown']) ky -= 1;
+  if (kx || ky) { const l = Math.hypot(kx, ky); tx = kx / l * maxS; ty = ky / l * maxS; use = true; }
+  else if (joy.active) {
+    const dx = joy.x - joy.sx, dy = joy.y - joy.sy, d = Math.hypot(dx, dy);
+    if (d > 6) { const k = Math.min(d, JOY_R) / JOY_R; tx = dx / d * k * maxS; ty = -dy / d * k * maxS; }
+    use = true;
+  } else if (mouse.active && !touchMode && state === 'play') {
+    const [wx, wy] = screenToWorld(mouse.sx, mouse.sy), dx = wx - P.x, dy = wy - P.y, d = Math.hypot(dx, dy);
+    if (d > 0.25) { const sp = Math.min(maxS, d * 3.2) * (P.dash > 0 ? 2.3 : 1); tx = dx / d * Math.min(sp, maxS); ty = dy / d * Math.min(sp, maxS); }
+    use = true;
+  }
+  if (P.dash > 0 && Math.hypot(tx, ty) < 1) { tx = P.face * maxS; }
+  if (P.stun > 0) { tx = 0; ty = 0; }
+  const acc = P.stun > 0 ? 1.5 : 6;
+  P.vx = damp(P.vx, tx, acc, dt); P.vy = damp(P.vy, ty, acc, dt);
+  P.x = clamp(P.x + P.vx * dt, -WX + 1, WX - 1);
+  P.y = clamp(P.y + P.vy * dt, FLOOR + P.len * 0.2 + 0.3, SURF - P.len * 0.2 - 0.2);
+  if (Math.abs(P.vx) > 0.4) P.face = P.vx > 0 ? 1 : -1;
+  if (P.dash > 0 && Math.random() < 0.5) addBubble(P.x - P.face * P.len * 0.5, P.y + rr(-0.2, 0.2), rr(-0.3, 0.3), rr(0.06, 0.12));
+  else if (Math.random() < dt * 2) addBubble(P.x + P.face * P.len * 0.5, P.y + 0.1, 0, rr(0.05, 0.1));
+}
+function updateFish(dt) {
+  const P = player, alive = P.alive && state === 'play';
+  for (const f of fishes) {
+    const dx = P.x - f.x, dy = P.y - f.y, d = Math.hypot(dx, dy) || 1;
+    let tvx = f.dir * f.sp, tvy = Math.sin(time * 0.9 + f.ph) * 0.6;
+    if (f.flee > 0) { f.flee -= dt; tvx = f.vx; }
+    else if (alive) {
+      if (f.s.aggro && isDanger(f) && P.inv <= 0 && f.chaseCD <= 0 && d < 9 + level) {
+        f.chase += dt;
+        const cs = Math.min(f.sp * 1.7, (7.5 + stage * 0.8) * 0.82);
+        tvx = dx / d * cs; tvy = dy / d * cs;
+        if (f.chase > 4) { f.chase = 0; f.chaseCD = 3; f.dir = f.vx > 0 ? 1 : -1; }
+      } else if (canEat(f) && f.s.flee && d < 4.5) {
+        tvx = -dx / d * f.sp * 1.6; tvy = -dy / d * f.sp * 1.6;
+      }
+    }
+    if (f.chaseCD > 0) f.chaseCD -= dt;
+    f.vx = damp(f.vx, tvx, 2.2, dt); f.vy = damp(f.vy, tvy, 2.2, dt);
+    f.x += f.vx * dt; f.y = clamp(f.y + f.vy * dt, FLOOR + f.len * 0.2 + 0.3, SURF - f.len * 0.2 - 0.2);
+    if (Math.abs(f.vx) > 0.3) f.face = f.vx > 0 ? 1 : -1;
+    f.yaw = damp(f.yaw, f.face > 0 ? 0 : Math.PI, 5, dt);
+    f.pitch = damp(f.pitch, clamp(Math.atan2(f.vy, Math.abs(f.vx) + 0.5), -0.5, 0.5), 5, dt);
+    f.tail += dt * (5 + Math.hypot(f.vx, f.vy) * 2.2);
+    if (f.chomp > 0) f.chomp -= dt * 3;
+    // interactions with the player
+    if (alive) {
+      const mx = P.x + P.face * P.len * 0.42, my = P.y;
+      if (canEat(f) && Math.hypot(mx - f.x, my - f.y) < f.len * 0.35 + P.len * 0.25) eat(f);
+      else if (isDanger(f)) {
+        const fx = f.x + f.face * f.len * 0.42;
+        if (Math.hypot(fx - P.x, f.y - P.y) < P.len * 0.32 + f.len * 0.18) hurt(f);
+      } else if (d < (f.len + P.len) * 0.28) { // same size: bump
+        const k = ((f.len + P.len) * 0.28 - d) / d; P.x -= dx * k * 0.5; P.y -= dy * k * 0.5; f.x += dx * k * 0.5; f.y += dy * k * 0.5;
+      }
+    }
+  }
+  fishes = fishes.filter(f => !f.dead && Math.abs(f.x) < WX + 16 && Math.abs(f.x - cam.x) < cam.halfW + 30);
+  // keep population
+  const target = Math.min(28, 15 + level * 2);
+  let n = fishes.filter(f => f.kind !== 'shark').length;
+  while (n < target) { spawnFish(pickKind()); n++; }
+  // make sure there is always something edible nearby
+  if (state === 'play' && !fishes.some(f => canEat(f) && Math.abs(f.x - P.x) < cam.halfW + 8)) spawnFish(KINDS[Math.max(0, stage * 2 - (Math.random() < 0.5 ? 1 : 0))]);
+  // shark
+  if (state === 'play' && level >= 2) {
+    sharkT -= dt;
+    if (sharkT <= 0) { sharkT = rr(22, 34) - level; const side = Math.random() < 0.5 ? 1 : -1; spawnFish('shark', side); toast('⚠ HIU DATANG!', '#ff6b6b'); sfx('warn'); }
+  }
+}
+function updateWorld(dt) {
+  // stars (bonus)
+  starT -= dt;
+  if (state === 'play' && starT <= 0) { starT = rr(12, 20); stars.push({ x: clamp(cam.x + rr(-cam.halfW * 0.8, cam.halfW * 0.8), -WX + 3, WX - 3), y: SURF, rot: 0, life: 14 }); }
+  for (const s of stars) {
+    s.y = Math.max(FLOOR + 0.6, s.y - dt * 1.4); s.rot += dt * 1.5; s.life -= dt;
+    if (player.alive && state === 'play' && Math.hypot(player.x - s.x, player.y - s.y) < player.len * 0.5 + 0.5) {
+      s.life = 0; score += 100 * level; growth += 2; sfx('star'); toast('+' + (100 * level) + ' ⭐', '#ffcf4d'); addBits(s.x, s.y, hx('#ffcf4d'), 16, 5); growTo(); if (growth >= LEVEL_GOAL) levelUp();
+    }
+  }
+  stars = stars.filter(s => s.life > 0);
+  // jellyfish
+  for (const j of jellies) {
+    j.ph += dt; j.y += Math.sin(j.ph * 0.8) * dt * 1.2; j.x += Math.sin(j.ph * 0.3) * dt * 0.4;
+    if (state === 'play' && player.alive && player.inv <= 0 && player.stun <= 0 && Math.hypot(player.x - j.x, player.y - (j.y - 0.3)) < player.len * 0.35 + 0.8) {
+      player.stun = 1.1; player.inv = 1.4; player.vx = (player.x > j.x ? 1 : -1) * 9; player.vy = 3; sfx('zap'); flash(); shake = 0.4; toast('NYETRUM! ⚡', '#ff9de0');
+    }
+  }
+  // ambient bubbles from the seabed
+  if (Math.random() < dt * 4) addBubble(cam.x + rr(-cam.halfW, cam.halfW), FLOOR - 0.5, rr(-4, 1), rr(0.06, 0.18));
+  for (const b of bubbles) { b.y += b.vy * dt; b.x += Math.sin(time * 3 + b.ph) * dt * 0.3; b.life -= dt; }
+  bubbles = bubbles.filter(b => b.life > 0 && b.y < SURF + 1);
+  for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.94; p.vy *= 0.94; p.life -= dt; }
+  particles = particles.filter(p => p.life > 0);
+  if (comboT > 0) { comboT -= dt; if (comboT <= 0) combo = 0; }
+  shake = damp(shake, 0, 5, dt);
+}
+function updateCamera(dt) {
+  const asp = W / H;
+  fov = (asp < 1 ? 62 : 50) * Math.PI / 180;
+  const t = Math.tan(fov / 2);
+  const zoom = 1 + (player.len - STAGE_LEN[0]) * 0.16;
+  const want = Math.max((asp < 1 ? 7.5 : 6.4) / t, (asp < 1 ? 6.0 : 7.8) / (t * asp)) * zoom;
+  cam.d = damp(cam.d, want, 2, dt);
+  cam.halfH = cam.d * t; cam.halfW = cam.halfH * asp;
+  let tx = player.x, ty = player.y;
+  if (state === 'menu') { tx = Math.sin(time * 0.08) * 12; ty = Math.sin(time * 0.13) * 1.5; }
+  const mx = Math.max(0, WX + 2 - cam.halfW);
+  cam.x = damp(cam.x, clamp(tx, -mx, mx), 3, dt);
+  cam.y = damp(cam.y, clamp(ty * 0.75, FLOOR + cam.halfH * 0.75, SURF - cam.halfH * 0.75 + 1), 3, dt);
+}
+function step(dt) {
+  time += dt;
+  if (state === 'menu') {
+    // Shafa idles in front of the camera
+    player.alive = true; player.len = STAGE_LEN[0] * 1.25;
+    player.x = cam.x + Math.sin(time * 0.6) * 1.8; player.y = cam.y + Math.sin(time * 0.9) * 0.6;
+    player.vx = Math.cos(time * 0.6) * 1.1; player.vy = Math.cos(time * 0.9) * 0.5; player.face = player.vx > 0 ? 1 : -1;
+  } else if (state === 'play') {
+    updatePlayer(dt);
+  }
+  if (state !== 'over') updateFish(dt);
+  updateWorld(dt);
+  // player anim
+  player.yaw = damp(player.yaw, player.face > 0 ? 0 : Math.PI, 7, dt);
+  player.pitch = damp(player.pitch, clamp(Math.atan2(player.vy, Math.abs(player.vx) + 0.6), -0.6, 0.6), 6, dt);
+  player.tail += dt * (6 + Math.hypot(player.vx, player.vy) * 1.8 + (player.dash > 0 ? 10 : 0));
+  if (player.chomp > 0) player.chomp -= dt * 4;
+  updateCamera(dt);
+  if (state === 'play') updateHUD(false);
+}
+
+// ---------- Rendering ----------
+const VP = mat(), P = mat(), V = mat(), M = mat(), MT = mat();
+const NO_TINT = new Float32Array([0, 0, 0, 0]), tintBuf = new Float32Array(4);
+let curBuf = null, lastAlpha = -1, lastEmis = -1, lastSway = -1;
+function bindMesh(mesh) {
+  if (curBuf === mesh.buf) return;
+  gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buf);
+  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 40, 0); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 40, 12); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 40, 24);
+  curBuf = mesh.buf;
+}
+function draw(mesh, m, tint, alpha = 1, emis = 0, sway = 0, swayBase = 0) {
+  bindMesh(mesh);
+  gl.uniformMatrix4fv(U.uM, false, m);
+  gl.uniform4fv(U.uTint, tint || NO_TINT);
+  if (alpha !== lastAlpha) { gl.uniform1f(U.uAlpha, alpha); lastAlpha = alpha; }
+  if (emis !== lastEmis) { gl.uniform1f(U.uEmis, emis); lastEmis = emis; }
+  if (sway !== lastSway) { gl.uniform1f(U.uSway, sway); gl.uniform1f(U.uSwayBase, swayBase); lastSway = sway; }
+  gl.drawArrays(gl.TRIANGLES, 0, mesh.count);
+}
+const tint = (c, a = 1) => { tintBuf[0] = c[0]; tintBuf[1] = c[1]; tintBuf[2] = c[2]; tintBuf[3] = a; return tintBuf; };
+function drawFishModel(F, x, y, len, yaw, pitch, tail, chomp, alpha, tintCol) {
+  ident(M); translate(M, x, y, 0); rotY(M, yaw + Math.sin(tail * 0.5) * 0.06); rotZ(M, pitch);
+  const c = Math.max(0, chomp);
+  scale(M, len * (1 + c * 0.12), len * (1 - c * 0.08), len);
+  draw(F.body, M, tintCol, alpha);
+  cp(MT, M); translate(MT, -0.42, 0, 0); rotY(MT, Math.sin(tail) * 0.55);
+  draw(F.tail, MT, tintCol, alpha);
+}
+let renderScale = DPR0;
+function resize() { W = window.innerWidth; H = window.innerHeight; canvas.width = Math.max(1, Math.floor(W * renderScale)); canvas.height = Math.max(1, Math.floor(H * renderScale)); }
+window.addEventListener('resize', resize); resize();
+
+function render() {
+  const asp = W / H;
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  camEye[0] = cam.x + (shake > 0.01 ? (Math.random() - .5) * shake : 0);
+  camEye[1] = cam.y + 1.2 + (shake > 0.01 ? (Math.random() - .5) * shake : 0);
+  camEye[2] = cam.d;
+  camTgt[0] = cam.x; camTgt[1] = cam.y; camTgt[2] = 0;
+  perspective(P, fov, asp, 0.3, 400); lookAt(V, camEye, camTgt); mul(VP, P, V);
+
+  // background (water gradient + light rays)
+  gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.BLEND);
+  gl.useProgram(BG.p);
+  gl.uniform3fv(BG.U.uTop, LIGHT.top); gl.uniform3fv(BG.U.uBot, LIGHT.bot);
+  gl.uniform1f(BG.U.uTime, time); gl.uniform1f(BG.U.uAsp, asp); gl.uniform1f(BG.U.uCamX, cam.x); gl.uniform1f(BG.U.uCamY, cam.y);
+  gl.bindBuffer(gl.ARRAY_BUFFER, bgBuf);
+  gl.enableVertexAttribArray(0); gl.disableVertexAttribArray(1); gl.disableVertexAttribArray(2);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); gl.drawArrays(gl.TRIANGLES, 0, 3); curBuf = null;
+
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.depthFunc(gl.LEQUAL);
+  gl.useProgram(MAIN.p);
+  gl.enableVertexAttribArray(1); gl.enableVertexAttribArray(2);
+  gl.uniformMatrix4fv(U.uVP, false, VP); gl.uniform3fv(U.uCam, camEye);
+  gl.uniform3fv(U.uSun, LIGHT.sun); gl.uniform3fv(U.uSunC, LIGHT.sunC); gl.uniform3fv(U.uSkyC, LIGHT.skyC); gl.uniform3fv(U.uGndC, LIGHT.gndC);
+  gl.uniform3fv(U.uFogC, LIGHT.fog); gl.uniform1f(U.uFog, 0.022); gl.uniform1f(U.uTime, time); gl.uniform1f(U.uCaus, 0.55);
+  lastAlpha = lastEmis = lastSway = -1;
+
+  ident(M);
+  draw(SCENE.decor, M);
+  draw(SCENE.sway, M, null, 1, 0, 0.05, -15);
+  for (const s of stars) { ident(M); translate(M, s.x, s.y, 0); rotZ(M, s.rot); scale(M, 0.9, 0.9, 0.9); draw(MESH.star, M); }
+  for (const f of fishes) {
+    if (Math.abs(f.x - cam.x) > cam.halfW + f.len + 2) continue;
+    drawFishModel(f.mesh, f.x, f.y, f.len, f.yaw, f.pitch, f.tail, f.chomp, 1, null);
+  }
+  if (player.alive && state !== 'over') {
+    const blink = player.inv > 0 && state === 'play' && Math.floor(player.inv * 10) % 2;
+    const tc = player.stun > 0 ? tint([1, 1, 0.6], 0.35 + 0.3 * Math.sin(time * 40)) : null;
+    if (!blink) drawFishModel(FISH.shafa, player.x, player.y, player.len, player.yaw, player.pitch, player.tail, player.chomp, 1, tc);
+  }
+  for (const p of particles) {
+    const a = clamp(p.life / p.max, 0, 1), s = p.size * (0.4 + 0.6 * a);
+    ident(M); translate(M, p.x, p.y, p.z); rotY(M, p.life * 9); scale(M, s, s, s); draw(MESH.cube, M, tint(p.col, 1), 1, 0.3);
+  }
+
+  // textured sign with the creator's name
+  gl.useProgram(TX.p);
+  gl.uniformMatrix4fv(TX.U.uVP, false, VP); gl.uniform3fv(TX.U.uCam, camEye); gl.uniform3fv(TX.U.uFogC, LIGHT.fog); gl.uniform1f(TX.U.uFog, 0.022);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, SIGN_TEX); gl.uniform1i(TX.U.uTex, 0);
+  ident(M); translate(M, SCENE.sign.x, SCENE.sign.y + Math.sin(time * 0.8) * 0.03, SCENE.sign.z + 0.1); rotZ(M, Math.sin(time * 0.6) * 0.02); scale(M, 4.6, 1.15, 1);
+  gl.uniformMatrix4fv(TX.U.uM, false, M);
+  gl.bindBuffer(gl.ARRAY_BUFFER, signQuad);
+  gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+  gl.disableVertexAttribArray(2);
+  gl.drawArrays(gl.TRIANGLES, 0, 6); curBuf = null;
+
+  // transparent pass
+  gl.useProgram(MAIN.p); gl.enableVertexAttribArray(2); lastAlpha = lastEmis = lastSway = -1;
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  for (const j of jellies) {
+    if (Math.abs(j.x - cam.x) > cam.halfW + 3) continue;
+    const pulse = 1 + Math.sin(j.ph * 3) * 0.1;
+    ident(M); translate(M, j.x, j.y, 0); scale(M, pulse, 1 / pulse, pulse); draw(MESH.jelly, M, null, 0.62, 0.1, 0.12, 0);
+  }
+  for (const b of bubbles) { ident(M); translate(M, b.x, b.y, b.z); scale(M, b.s, b.s, b.s); draw(MESH.bubble, M, null, 0.35, 0.4); }
+  ident(M); translate(M, cam.x, SURF + 1.2, 0); draw(MESH.surface, M, null, 0.3, 0.6, 0, 0);
+  gl.depthMask(true); gl.disable(gl.BLEND);
+
+  // joystick indicator is drawn with DOM-free canvas? (kept in HUD layer)
+}
+
+// ---------- HUD ----------
+const FISH_SVG = c => `<svg viewBox="0 0 34 22"><ellipse cx="15" cy="11" rx="12" ry="7.5" fill="${c}"/><path d="M26 11 L34 3 L34 19 Z" fill="${c}"/><circle cx="9" cy="9" r="2" fill="#fff"/><circle cx="8.5" cy="9" r="1" fill="#111"/></svg>`;
+function buildChain() { $('chain').innerHTML = KINDS.concat(['shark']).map(k => `<div class="fi" id="fi_${k}">${FISH_SVG(FT[k].col)}</div>`).join(''); }
+buildChain();
+function refreshChain() {
+  for (const k of KINDS.concat(['shark'])) {
+    const el = $('fi_' + k), s = FT[k], ok = !s.inedible && s.len < STAGE_LEN[stage] * 0.92;
+    el.classList.toggle('ok', ok); el.classList.toggle('bad', !ok && s.len > STAGE_LEN[stage] * 1.08);
+  }
+}
+$('m1').style.left = (STAGE_AT[1] / LEVEL_GOAL * 100) + '%'; $('m2').style.left = (STAGE_AT[2] / LEVEL_GOAL * 100) + '%';
+const hc = { s: -1, l: -1, g: -1, lv: -1, c: -1, d: null };
+function updateHUD(force) {
+  const s = Math.floor(score);
+  if (force || s !== hc.s) { hc.s = s; $('score').textContent = s; }
+  if (force || lives !== hc.l) { hc.l = lives; $('lives').textContent = '❤️'.repeat(Math.max(0, lives)) + '🖤'.repeat(Math.max(0, 3 - lives)); }
+  if (force || growth !== hc.g) { hc.g = growth; $('grow').style.width = clamp(growth / LEVEL_GOAL * 100, 0, 100) + '%'; }
+  if (force || level !== hc.lv) { hc.lv = level; $('lvl').textContent = 'LEVEL ' + level; }
+  const cm = combo >= 2 ? combo : 0;
+  if (force || cm !== hc.c) { hc.c = cm; const el = $('combo'); el.textContent = cm ? 'COMBO ' + cm + (combo >= 8 ? ' · ×3' : combo >= 4 ? ' · ×2' : '') : ''; el.style.opacity = cm ? 1 : 0; }
+  const cool = player.dashCD > 0;
+  if (force || cool !== hc.d) { hc.d = cool; $('dash').classList.toggle('cool', cool); }
+}
+let toastTimer = 0;
+function toast(text, color) { const t = $('toast'); t.textContent = text; t.style.color = color || '#fff'; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1100); }
+function flash() { const f = $('flash'); f.style.transition = 'none'; f.style.opacity = 1; void f.offsetWidth; f.style.transition = 'opacity .5s'; f.style.opacity = 0; }
+const show = (id, on) => $(id).classList.toggle('hidden', !on);
+$('ctrlHint').innerHTML = touchMode ? 'Geser jari di mana aja buat berenang · tombol ⚡ buat ngebut' : 'Gerakin mouse buat berenang (atau WASD/panah) · Klik / Spasi buat ngebut · P pause';
+const refreshBest = () => { $('menuBest').textContent = best ? '🏆 Rekor: ' + best : ''; };
+refreshBest();
+const ICON_SOUND = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M18.5 6a8.5 8.5 0 0 1 0 12" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+const ICON_MUTE = '<svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+const muteBtn = document.createElement('button'); muteBtn.className = 'iconbtn glass'; muteBtn.setAttribute('aria-label', 'Suara');
+$('btnPause').before(muteBtn);
+const refreshMute = () => { muteBtn.innerHTML = AU.muted ? ICON_MUTE : ICON_SOUND; }; refreshMute();
+muteBtn.addEventListener('click', () => { audioInit(); AU.muted = !AU.muted; store('ssMuted', AU.muted ? '1' : '0'); if (AU.master) AU.master.gain.value = AU.muted ? 0 : 0.7; refreshMute(); });
+
+// joystick visual (DOM)
+const joyEl = document.createElement('div');
+joyEl.style.cssText = 'position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);display:none;pointer-events:none';
+const knob = document.createElement('div');
+knob.style.cssText = 'position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(255,255,255,.4);box-shadow:0 0 16px rgba(120,240,255,.8)';
+joyEl.appendChild(knob); $('ui').appendChild(joyEl);
+function updateJoyEl() {
+  if (joy.active && state === 'play') {
+    joyEl.style.display = 'block'; joyEl.style.left = joy.sx + 'px'; joyEl.style.top = joy.sy + 'px';
+    let dx = joy.x - joy.sx, dy = joy.y - joy.sy; const d = Math.hypot(dx, dy); if (d > JOY_R) { dx = dx / d * JOY_R; dy = dy / d * JOY_R; }
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+  } else joyEl.style.display = 'none';
+}
+
+function startRun() {
+  audioInit(); runId++; resetGame(); state = 'play'; paused = false;
+  show('menu', false); show('over', false); show('pause', false); show('hud', true); show('credit', true); showDashBtn();
+  sfx('start'); musicStart();
+  const hint = $('hint');
+  hint.textContent = touchMode ? 'Geser jari buat berenang · makan ikan yang lebih kecil! 🐟' : 'Gerakin mouse buat berenang · makan ikan yang lebih kecil! 🐟';
+  hint.classList.remove('hidden'); hint.style.opacity = 1;
+  setTimeout(() => { hint.style.opacity = 0; }, 3800); setTimeout(() => hint.classList.add('hidden'), 4500);
+}
+function gameOver() {
+  state = 'over'; musicStop();
+  const s = Math.floor(score), isNew = s > best; if (isNew) { best = s; store('ssBest', best); }
+  $('overScore').textContent = s; $('overInfo').textContent = 'Level ' + level + '  ·  🏆 ' + best;
+  show('overNew', isNew); show('hud', false); show('credit', false); show('over', true);
+}
+function toMenu() {
+  state = 'menu'; paused = false; musicStop(); fishes = []; jellies = []; stars = [];
+  show('over', false); show('pause', false); show('hud', false); show('credit', false); show('menu', true); refreshBest();
+}
+function setPause(p) { if (state !== 'play') return; paused = p; show('pause', p); if (p) musicStop(); else { audioInit(); musicStart(); } }
+$('btnPlay').addEventListener('click', startRun); $('btnAgain').addEventListener('click', startRun);
+$('btnMenu').addEventListener('click', toMenu); $('btnPauseMenu').addEventListener('click', toMenu);
+$('btnPause').addEventListener('click', () => setPause(true)); $('btnResume').addEventListener('click', () => setPause(false));
+document.addEventListener('visibilitychange', () => { if (document.hidden) setPause(true); });
+
+// ---------- Main loop ----------
+let last = performance.now(), perfAcc = 0, perfN = 0;
+function frame(t) {
+  requestAnimationFrame(frame);
+  let dt = (t - last) / 1000; last = t; if (!(dt > 0)) dt = 1 / 60; dt = Math.min(dt, 0.05);
+  perfAcc += dt; perfN++;
+  if (perfAcc > 2) { const avg = perfAcc / perfN; perfAcc = 0; perfN = 0; if (avg > 1 / 45 && renderScale > 0.75 && !document.hidden) { renderScale = Math.max(0.75, renderScale - 0.35); resize(); } }
+  if (!paused) step(dt);
+  render(); updateJoyEl();
+}
+updateCamera(1); cam.x = 0; cam.y = 0;
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
