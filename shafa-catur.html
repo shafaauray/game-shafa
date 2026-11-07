@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2a1e16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Catur Shafa 3D · by @shafaauray</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #2a1e16; touch-action: none; overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #f6ead8; }
+  canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #ui { position: fixed; inset: 0; pointer-events: none; }
+  .hidden { display: none !important; }
+  button, input, select { font-family: inherit; }
+  button { pointer-events: auto; cursor: pointer; border: 0; color: inherit; }
+  a { pointer-events: auto; }
+  .glass { background: rgba(30,20,14,.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 4px 16px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,220,170,.18); }
+  #top { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 10px) 0 calc(env(safe-area-inset-left) + 10px); }
+  .ib { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; flex: none; }
+  .pc { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 16px; transition: box-shadow .2s, background .2s; }
+  .pc .ic { font-size: 26px; line-height: 1; flex: none; } .pc .nm { font-weight: 900; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .pc .cap { font-size: 13px; letter-spacing: -2px; opacity: .85; white-space: nowrap; overflow: hidden; min-height: 1em; }
+  .pc .ck { margin-left: auto; font-weight: 900; font-size: 22px; font-variant-numeric: tabular-nums; padding: 2px 10px; border-radius: 10px; background: rgba(0,0,0,.35); }
+  .pc.on { background: rgba(255,214,120,.25); box-shadow: 0 0 0 2px #ffd678, 0 4px 18px rgba(255,200,90,.35); } .pc.low .ck { background: #c0303a; animation: pulse .5s infinite alternate; }
+  @keyframes pulse { to { transform: scale(1.06); } }
+  .pc .w { min-width: 0; }
+  #status { position: absolute; left: 50%; top: calc(env(safe-area-inset-top) + 64px); transform: translateX(-50%); padding: 6px 16px; border-radius: 999px; font-weight: 900; font-size: 14px; white-space: nowrap; }
+  #status.check { background: #c0303a; }
+  #side { position: absolute; right: calc(env(safe-area-inset-right) + 10px); top: calc(env(safe-area-inset-top) + 64px); bottom: calc(env(safe-area-inset-bottom) + 10px); width: min(280px, 30vw); border-radius: 18px; padding: 10px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
+  #moves { flex: 1; overflow-y: auto; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; touch-action: pan-y; }
+  #moves .r { display: grid; grid-template-columns: 34px 1fr 1fr; padding: 3px 4px; border-radius: 6px; } #moves .r:nth-child(odd) { background: rgba(255,255,255,.05); } #moves .n { opacity: .55; } #moves .last { color: #ffd678; }
+  .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .btn { padding: 10px 10px; border-radius: 12px; font-weight: 900; font-size: 13px; background: rgba(255,255,255,.1); }
+  .btn:active { transform: scale(.96); } .btn.gold { background: linear-gradient(#ffd678, #d8a040); color: #2a1e16; } .btn.red { background: rgba(200,50,60,.75); }
+  @media (orientation: portrait), (max-width: 760px) {
+    #side { left: calc(env(safe-area-inset-left) + 8px); right: calc(env(safe-area-inset-right) + 8px); top: auto; bottom: calc(env(safe-area-inset-bottom) + 8px); width: auto; height: auto; padding: 8px; }
+    #moves { flex: none; display: flex; gap: 4px; overflow-x: auto; overflow-y: hidden; white-space: nowrap; touch-action: pan-x; font-size: 13px; }
+    #moves .r { display: inline-flex; gap: 6px; padding: 4px 8px; flex: none; background: rgba(255,255,255,.06) !important; }
+    .acts { grid-template-columns: repeat(4, 1fr); } .btn { padding: 9px 4px; font-size: 12px; }
+    #top { gap: 5px; } #top .ib { width: 34px; height: 34px; font-size: 15px; } .pc { padding: 5px 7px; gap: 5px; } .pc .ic { display: none; } .pc .ck { font-size: 15px; padding: 2px 5px; } .pc .nm { font-size: 12px; } .pc .cap { font-size: 11px; }
+    #status { top: calc(env(safe-area-inset-top) + 62px); font-size: 12px; }
+  }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 12px; pointer-events: auto; padding: 20px; text-align: center; overflow: auto; touch-action: pan-y; }
+  .screen > :first-child { margin-top: auto; } .screen > :last-child { margin-bottom: auto; }
+  .dim { background: radial-gradient(ellipse at center, rgba(40,26,16,.35), rgba(16,10,6,.85)); }
+  .title { font-size: clamp(46px, 12vw, 92px); font-weight: 900; line-height: .9; color: #fff3dc; text-shadow: 0 4px 0 #a8742e, 0 8px 0 #5a3a18, 0 14px 24px rgba(0,0,0,.6); letter-spacing: 2px; }
+  .title span { color: #ffd678; } .title small { display: block; font-size: .24em; letter-spacing: 6px; margin-top: 12px; text-shadow: 0 2px 0 #5a3a18; }
+  .sub { font-weight: 700; font-size: clamp(13px, 3.5vw, 16px); max-width: 520px; opacity: .92; }
+  .box { width: min(560px, 100%); border-radius: 20px; padding: 14px; background: rgba(255,240,220,.08); box-shadow: inset 0 0 0 1px rgba(255,220,170,.2); display: flex; flex-direction: column; gap: 10px; text-align: left; }
+  .box h3 { margin: 0; font-size: 14px; letter-spacing: 1px; color: #ffd678; }
+  .names { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .names label { font-size: 12px; font-weight: 800; opacity: .8; display: flex; flex-direction: column; gap: 4px; }
+  .names input { width: 100%; min-width: 0; border: 0; border-radius: 12px; padding: 10px 12px; font-size: 15px; font-weight: 800; background: rgba(255,255,255,.12); color: #fff; outline: none; pointer-events: auto; }
+  .tc { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+  .tc button { text-align: left; padding: 9px 12px; border-radius: 14px; background: rgba(255,255,255,.08); font-weight: 900; font-size: 14px; line-height: 1.25; }
+  .tc button small { display: block; font-weight: 700; font-size: 11px; opacity: .75; } .tc button.on { background: linear-gradient(#ffd678, #d8a040); color: #2a1e16; }
+  .tog { display: flex; gap: 6px; flex-wrap: wrap; } .tog button { padding: 9px 14px; border-radius: 999px; background: rgba(255,255,255,.08); font-weight: 900; font-size: 13px; } .tog button.on { background: #ffd678; color: #2a1e16; }
+  .big { padding: 15px 34px; border-radius: 999px; font-size: clamp(18px, 5vw, 23px); font-weight: 900; min-width: min(320px, 80vw); background: linear-gradient(#ffd678, #d8a040); color: #2a1e16; box-shadow: 0 5px 0 #8a5a18; }
+  .lnk { padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 800; text-decoration: none; color: #2a1e16; display: inline-block; background: rgba(255,240,220,.9); }
+  .by { font-weight: 900; font-size: 15px; padding: 6px 14px; border-radius: 999px; text-decoration: none; color: #fff; background: linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .card { background: #fff7ea; color: #2a1e16; border-radius: 24px; padding: 20px; width: min(440px, 92vw); display: flex; flex-direction: column; gap: 10px; align-items: center; box-shadow: 0 14px 40px rgba(0,0,0,.5); }
+  .card h2 { margin: 0; font-size: 24px; } .card p { margin: 0; font-weight: 700; font-size: 14px; line-height: 1.45; } .card .big2 { font-size: 52px; line-height: 1; }
+  .card .btn { background: #efe0c8; color: #2a1e16; padding: 12px 16px; font-size: 15px; } .card .btn.gold { background: linear-gradient(#ffd678, #d8a040); }
+  .promo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; } .promo button { font-size: 52px; line-height: 1.1; background: #efe0c8; border-radius: 16px; padding: 6px 0; color: #2a1e16; }
+  #rulesBody { max-width: 680px; text-align: left; background: #fff7ea; color: #2a1e16; border-radius: 22px; padding: 18px 20px; line-height: 1.55; font-size: 14px; }
+  #rulesBody h2 { margin: 0 0 6px; } #rulesBody h3 { margin: 16px 0 4px; color: #8a5a18; font-size: 16px; } #rulesBody table { border-collapse: collapse; width: 100%; font-size: 13px; } #rulesBody td { border-bottom: 1px solid #ecdcc0; padding: 5px 4px; vertical-align: top; }
+  #rulesBody .pz { font-size: 26px; width: 36px; } #rulesBody ul { margin: 4px 0; padding-left: 20px; } #rulesBody b { color: #5a3a18; }
+  #loading { position: absolute; inset: 0; display: grid; place-items: center; background: #2a1e16; font-weight: 900; font-size: 18px; pointer-events: auto; }
+  @media (max-height: 560px) { .screen { gap: 8px; padding: 10px; } .title { font-size: 40px; } .title small { font-size: 11px; margin-top: 6px; } .box { padding: 10px; gap: 6px; } .big { padding: 10px 24px; font-size: 18px; } }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="ui">
+  <div id="top" class="hidden">
+    <button class="ib glass" id="btnHome" title="Menu">🏠</button>
+    <div class="pc glass" id="pcw"><div class="ic">♔</div><div class="w"><div class="nm" id="nmw">Putih</div><div class="cap" id="capw"></div></div><div class="ck" id="ckw">–</div></div>
+    <div class="pc glass" id="pcb"><div class="ic">♚</div><div class="w"><div class="nm" id="nmb">Hitam</div><div class="cap" id="capb"></div></div><div class="ck" id="ckb">–</div></div>
+    <button class="ib glass" id="btnMute" title="Suara">🔊</button>
+  </div>
+  <div id="status" class="glass hidden">Giliran Putih</div>
+  <div id="side" class="glass hidden">
+    <div id="moves"></div>
+    <div class="acts">
+      <button class="btn" id="bFlip">🔄 Putar</button>
+      <button class="btn" id="bUndo">↩️ Batal</button>
+      <button class="btn" id="bDraw">🤝 Remis</button>
+      <button class="btn red" id="bResign">🏳️ Menyerah</button>
+      <button class="btn gold hidden" id="bClaim" style="grid-column: 1 / -1">⚖️ Klaim remis</button>
+    </div>
+  </div>
+  <div id="menu" class="screen dim">
+    <div class="title">CATUR<br><span>SHAFA</span><small>3D · ATURAN FIDE</small></div>
+    <div class="sub">Catur 2 pemain di satu perangkat, pakai aturan resmi <b>FIDE</b> (Federasi Catur Internasional) ♟️</div>
+    <div class="box">
+      <h3>👥 PEMAIN</h3>
+      <div class="names"><label>♔ Putih (jalan duluan)<input id="inW" maxlength="14" value="Shafa"></label><label>♚ Hitam<input id="inB" maxlength="14" value="Shaka"></label></div>
+      <h3>⏱️ JENIS PERMAINAN (WAKTU)</h3>
+      <div class="tc" id="tcs"></div>
+      <h3>♟️ VARIAN</h3>
+      <div class="tog" id="vars"><button data-v="0">Catur Standar</button><button data-v="1">Chess960 (Fischer Random)</button></div>
+      <h3>🔄 PAPAN</h3>
+      <div class="tog" id="rots"><button data-v="1">Putar otomatis ke pemain yang jalan</button><button data-v="0">Tetap dari sisi Putih</button></div>
+    </div>
+    <button class="big" id="btnPlay">♟️ Mulai Main</button>
+    <div class="row"><button class="lnk" id="btnRules">📖 Aturan &amp; Cara Main</button><a class="lnk" href="index.html">← Game lain</a></div>
+    <a class="by" href="https://www.instagram.com/shafaauray/" target="_blank" rel="noopener">by @shafaauray</a>
+  </div>
+  <div id="rules" class="screen dim hidden"><div id="rulesBody"></div><button class="big" id="btnRulesClose">Paham, tutup ✔️</button></div>
+  <div id="pop" class="screen dim hidden"><div class="card" id="popCard"></div></div>
+  <div id="loading">Menata bidak… ♟️</div>
+</div>
+<script>
+'use strict';
+// =====================================================================
+//  CATUR SHAFA 3D — FIDE Laws of Chess, 2 players · by @shafaauray
+// =====================================================================
+const $ = id => document.getElementById(id);
+const canvas = $('gl');
+const DPR0 = Math.min(window.devicePixelRatio || 1, 2);
+const gl = canvas.getContext('webgl', { antialias: true, alpha: false, powerPreference: 'high-performance' }) || canvas.getContext('experimental-webgl');
+if (!gl) { $('loading').innerHTML = 'Browser kamu belum mendukung WebGL 😢<br>Coba Chrome atau Safari terbaru.'; throw new Error('no webgl'); }
+canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); setTimeout(() => location.reload(), 300); });
+
+const TAU = Math.PI * 2;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+const ease = t => t * t * (3 - 2 * t);
+function hx(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; }
+const shade = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+function mulberry(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let R = Math.random; const rr = (a, b) => a + (b - a) * R(); const pick = a => a[Math.floor(R() * a.length)];
+const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+// ---------- Matrices ----------
+const mat = () => new Float32Array(16);
+const cp = (d, s) => { d.set(s); return d; };
+function ident(m) { m.fill(0); m[0] = m[5] = m[10] = m[15] = 1; return m; }
+const _mt = mat();
+function mul(out, a, b) { const o = _mt; for (let c = 0; c < 4; c++) { const b0 = b[c * 4], b1 = b[c * 4 + 1], b2 = b[c * 4 + 2], b3 = b[c * 4 + 3];
+  o[c * 4] = a[0] * b0 + a[4] * b1 + a[8] * b2 + a[12] * b3; o[c * 4 + 1] = a[1] * b0 + a[5] * b1 + a[9] * b2 + a[13] * b3;
+  o[c * 4 + 2] = a[2] * b0 + a[6] * b1 + a[10] * b2 + a[14] * b3; o[c * 4 + 3] = a[3] * b0 + a[7] * b1 + a[11] * b2 + a[15] * b3; } out.set(o); return out; }
+function translate(m, x, y, z) { m[12] += m[0] * x + m[4] * y + m[8] * z; m[13] += m[1] * x + m[5] * y + m[9] * z; m[14] += m[2] * x + m[6] * y + m[10] * z; m[15] += m[3] * x + m[7] * y + m[11] * z; return m; }
+function rotX(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const y = m[4 + i], z = m[8 + i]; m[4 + i] = y * c + z * s; m[8 + i] = z * c - y * s; } return m; }
+function rotY(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const x = m[i], z = m[8 + i]; m[i] = x * c - z * s; m[8 + i] = x * s + z * c; } return m; }
+function rotZ(m, a) { if (!a) return m; const c = Math.cos(a), s = Math.sin(a); for (let i = 0; i < 4; i++) { const x = m[i], y = m[4 + i]; m[i] = x * c + y * s; m[4 + i] = y * c - x * s; } return m; }
+function scale(m, x, y, z) { for (let i = 0; i < 4; i++) { m[i] *= x; m[4 + i] *= y; m[8 + i] *= z; } return m; }
+function perspective(m, fovy, asp, n, f) { const t = 1 / Math.tan(fovy / 2); m.fill(0); m[0] = t / asp; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f); return m; }
+function lookAt(m, e, t) { let zx = e[0] - t[0], zy = e[1] - t[1], zz = e[2] - t[2]; let l = Math.hypot(zx, zy, zz); zx /= l; zy /= l; zz /= l;
+  let xx = zz, xz = -zx; l = Math.hypot(xx, xz) || 1; xx /= l; xz /= l; const xy = 0; const yx = zy * xz - zz * xy, yy = zz * xx - zx * xz, yz = zx * xy - zy * xx;
+  m[0] = xx; m[1] = yx; m[2] = zx; m[3] = 0; m[4] = xy; m[5] = yy; m[6] = zy; m[7] = 0; m[8] = xz; m[9] = yz; m[10] = zz; m[11] = 0;
+  m[12] = -(xx * e[0] + xy * e[1] + xz * e[2]); m[13] = -(yx * e[0] + yy * e[1] + yz * e[2]); m[14] = -(zx * e[0] + zy * e[1] + zz * e[2]); m[15] = 1; return m; }
+function T(x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, rx = 0, rz = 0) { const m = ident(mat()); translate(m, x, y, z); rotY(m, ry); rotX(m, rx); rotZ(m, rz); return scale(m, sx, sy, sz); }
+
+// ---------- Geometry (pos3 nor3 col4 uv2) ----------
+const BOX_FACES = [
+  [[1, 0, 0], [[.5, -.5, .5], [.5, -.5, -.5], [.5, .5, -.5], [.5, .5, .5]]], [[-1, 0, 0], [[-.5, -.5, -.5], [-.5, -.5, .5], [-.5, .5, .5], [-.5, .5, -.5]]],
+  [[0, 1, 0], [[-.5, .5, .5], [.5, .5, .5], [.5, .5, -.5], [-.5, .5, -.5]]], [[0, -1, 0], [[-.5, -.5, -.5], [.5, -.5, -.5], [.5, -.5, .5], [-.5, -.5, .5]]],
+  [[0, 0, 1], [[-.5, -.5, .5], [.5, -.5, .5], [.5, .5, .5], [-.5, .5, .5]]], [[0, 0, -1], [[.5, -.5, -.5], [-.5, -.5, -.5], [-.5, .5, -.5], [.5, .5, -.5]]],
+];
+const QUV = [[0, 1], [1, 1], [1, 0], [0, 0]];
+class Geo {
+  constructor() { this.a = []; }
+  v(m, p, n, c, e, uv) { const a = this.a, x = p[0], y = p[1], z = p[2];
+    a.push(m[0] * x + m[4] * y + m[8] * z + m[12], m[1] * x + m[5] * y + m[9] * z + m[13], m[2] * x + m[6] * y + m[10] * z + m[14]);
+    const tx = m[0] * n[0] + m[4] * n[1] + m[8] * n[2], ty = m[1] * n[0] + m[5] * n[1] + m[9] * n[2], tz = m[2] * n[0] + m[6] * n[1] + m[10] * n[2];
+    const l = Math.hypot(tx, ty, tz) || 1; a.push(tx / l, ty / l, tz / l, c[0], c[1], c[2], e, uv[0], uv[1]); }
+  box(m, c, e = 0, us = 1, vs = 1) { for (const [n, q] of BOX_FACES) { const u = QUV.map(t => [t[0] * us, t[1] * vs]);
+    this.v(m, q[0], n, c, e, u[0]); this.v(m, q[1], n, c, e, u[1]); this.v(m, q[2], n, c, e, u[2]); this.v(m, q[0], n, c, e, u[0]); this.v(m, q[2], n, c, e, u[2]); this.v(m, q[3], n, c, e, u[3]); } }
+  quad(m, p0, p1, p2, p3, c, e = 0, uv = QUV) { const ux = p1[0] - p0[0], uy = p1[1] - p0[1], uz = p1[2] - p0[2], vx = p3[0] - p0[0], vy = p3[1] - p0[1], vz = p3[2] - p0[2];
+    const n = [uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx];
+    this.v(m, p0, n, c, e, uv[0]); this.v(m, p1, n, c, e, uv[1]); this.v(m, p2, n, c, e, uv[2]); this.v(m, p0, n, c, e, uv[0]); this.v(m, p2, n, c, e, uv[2]); this.v(m, p3, n, c, e, uv[3]); }
+  // surface of revolution; prof = [[y, r], ...] top->bottom
+  lathe(m, prof, seg, c, e = 0, o = {}) {
+    const sx = o.sx || 1, sz = o.sz || 1, a0 = o.a0 || 0, a1 = o.a1 === undefined ? TAU : o.a1, uR = o.uRep || 1, vR = o.vRep || 1, n = prof.length;
+    const L = [0]; for (let i = 1; i < n; i++) L.push(L[i - 1] + Math.hypot(prof[i][0] - prof[i - 1][0], prof[i][1] - prof[i - 1][1]));
+    const P = [];
+    for (let j = 0; j <= seg; j++) { const f = a0 + (a1 - a0) * j / seg, cf = Math.cos(f), sf = Math.sin(f), row = [];
+      for (let i = 0; i < n; i++) { const [y, r] = prof[i]; row.push({ p: [cf * r * sx, y, sf * r * sz], uv: [j / seg * uR, (o.vAbs ? (prof[0][0] - y) : L[i] / (L[n - 1] || 1)) * vR], cf, sf }); }
+      P.push(row); }
+    const full = Math.abs(a1 - a0 - TAU) < 1e-6;
+    for (let j = 0; j <= seg; j++) for (let i = 0; i < n; i++) {
+      const q = P[j][i];
+      if (o.center) { const d = [q.p[0] - o.center[0], q.p[1] - o.center[1], q.p[2] - o.center[2]]; q.n = d; continue; }
+      const jp = j < seg ? j + 1 : (full ? 1 : j), jm = j > 0 ? j - 1 : (full ? seg - 1 : j), ip = Math.min(n - 1, i + 1), im = Math.max(0, i - 1);
+      const du = [P[jp][i].p[0] - P[jm][i].p[0], 0, P[jp][i].p[2] - P[jm][i].p[2]], dv = [P[j][ip].p[0] - P[j][im].p[0], P[j][ip].p[1] - P[j][im].p[1], P[j][ip].p[2] - P[j][im].p[2]];
+      let nn = [du[1] * dv[2] - du[2] * dv[1], du[2] * dv[0] - du[0] * dv[2], du[0] * dv[1] - du[1] * dv[0]];
+      if (nn[0] * q.cf + nn[2] * q.sf < 0) nn = nn.map(v => -v);
+      if (Math.hypot(...nn) < 1e-9) nn = [q.cf, 0, q.sf];
+      q.n = nn;
+    }
+    for (let j = 0; j < seg; j++) for (let i = 0; i < n - 1; i++) {
+      const a = P[j][i], b = P[j + 1][i], cc = P[j + 1][i + 1], d = P[j][i + 1];
+      if (o.skip) { const mp = [(a.p[0] + cc.p[0]) / 2, (a.p[1] + cc.p[1]) / 2, (a.p[2] + cc.p[2]) / 2]; if (o.skip(mp)) continue; }
+      const col = o.colFn ? o.colFn(a.p) : c;
+      this.v(m, a.p, a.n, col, e, a.uv); this.v(m, b.p, b.n, col, e, b.uv); this.v(m, cc.p, cc.n, col, e, cc.uv);
+      this.v(m, a.p, a.n, col, e, a.uv); this.v(m, cc.p, cc.n, col, e, cc.uv); this.v(m, d.p, d.n, col, e, d.uv);
+    }
+  }
+  ell(m, cx, cy, cz, rx, ry, rz, c, e = 0, seg = 14, o = {}) {
+    const rows = Math.max(6, seg >> 1), prof = []; for (let i = 0; i <= rows; i++) { const th = i / rows * Math.PI; prof.push([Math.cos(th) * ry, Math.sin(th)]); }
+    const mm = mul(mat(), m, T(cx, cy, cz)); this.lathe(mm, prof, seg, c, e, Object.assign({ sx: rx, sz: rz, center: [0, 0, 0] }, o));
+  }
+  cyl(m, x, y0, y1, z, r0, r1, c, e = 0, seg = 12, o = {}) { const mm = mul(mat(), m, T(x, 0, z)); this.lathe(mm, [[y1, 0], [y1, r1], [y0, r0], [y0, 0]], seg, c, e, o); }
+  ribbon(m, pts, c, e = 0, vR = 1) { // pts: [{p:[x,y,z], s:[x,y,z] (half-width side vector)}]
+    let L = 0;
+    for (let i = 0; i < pts.length - 1; i++) { const A = pts[i], B = pts[i + 1], l = Math.hypot(B.p[0] - A.p[0], B.p[1] - A.p[1], B.p[2] - A.p[2]);
+      const a0 = [A.p[0] - A.s[0], A.p[1] - A.s[1], A.p[2] - A.s[2]], a1 = [A.p[0] + A.s[0], A.p[1] + A.s[1], A.p[2] + A.s[2]], b1 = [B.p[0] + B.s[0], B.p[1] + B.s[1], B.p[2] + B.s[2]], b0 = [B.p[0] - B.s[0], B.p[1] - B.s[1], B.p[2] - B.s[2]];
+      this.quad(m, a0, a1, b1, b0, c, e, [[0, L * vR], [1, L * vR], [1, (L + l) * vR], [0, (L + l) * vR]]); L += l; }
+  }
+  build() { const d = new Float32Array(this.a), b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, d, gl.STATIC_DRAW); return { buf: b, count: d.length / 12 }; }
+}
+const I = ident(mat());
+const freeMesh = m => { if (m && m.buf) gl.deleteBuffer(m.buf); };
+
+// ---------- Shaders ----------
+const VS = `attribute vec3 aPos; attribute vec3 aNor; attribute vec4 aCol; attribute vec2 aUV;
+uniform mat4 uVP, uM; uniform float uTime, uSway, uSwayTop;
+varying vec3 vN; varying vec4 vC; varying vec3 vW; varying vec2 vUV;
+void main(){ vec3 p = aPos;
+  if (uSway > 0.0) { float k = clamp((uSwayTop - p.y) / 0.6, 0.0, 1.0); k *= k; p.x += sin(uTime * 1.6 + p.y * 2.5) * uSway * k; p.z += sin(uTime * 1.2 + 1.3) * uSway * 0.6 * k; }
+  vec4 w = uM * vec4(p, 1.0); vW = w.xyz; vN = mat3(uM[0].xyz, uM[1].xyz, uM[2].xyz) * aNor; vC = aCol; vUV = aUV; gl_Position = uVP * w; }`;
+const FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec3 vN; varying vec4 vC; varying vec3 vW; varying vec2 vUV;
+uniform sampler2D uTex; uniform vec3 uCam, uKey, uKeyC, uSkyC, uGndC, uFogC; uniform float uSpec, uFog, uAlpha;
+void main(){ vec4 t = texture2D(uTex, vUV); if (t.a < 0.4) discard;
+  vec3 n = normalize(vN); vec3 v = normalize(uCam - vW); if (dot(n, v) < 0.0) n = -n;
+  vec3 base = vC.rgb * t.rgb;
+  vec3 light = mix(uGndC, uSkyC, n.y * 0.5 + 0.5) + uKeyC * max(dot(n, uKey), 0.0);
+  vec3 col = base * light;
+  vec3 h = normalize(uKey + v); col += uKeyC * pow(max(dot(n, h), 0.0), 36.0) * uSpec;
+  col += pow(1.0 - max(dot(n, v), 0.0), 3.0) * 0.18 * uSkyC * base * 2.0;
+  col = mix(col, base * 1.15, vC.a);
+  float d = length(uCam - vW) * uFog; col = mix(col, uFogC, clamp(1.0 - exp(-d * d), 0.0, 1.0));
+  gl_FragColor = vec4(col, uAlpha); }`;
+const SKY_VS = `attribute vec2 aPos; varying vec2 vP; void main(){ vP = aPos; gl_Position = vec4(aPos, 0.999, 1.0); }`;
+const SKY_FS = `precision mediump float; varying vec2 vP; void main(){ float t = vP.y * 0.5 + 0.5; vec3 c = mix(vec3(1.0, 0.86, 0.66), vec3(0.45, 0.68, 0.92), smoothstep(0.2, 1.0, t)); gl_FragColor = vec4(c, 1.0); }`;
+function compile(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+function program(vs, fs, attrs) { const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, vs)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  attrs.forEach((a, i) => gl.bindAttribLocation(p, i, a)); gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const U = {}, n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); for (let i = 0; i < n; i++) { const info = gl.getActiveUniform(p, i); U[info.name] = gl.getUniformLocation(p, info.name); } return { p, U }; }
+const MAIN = program(VS, FS, ['aPos', 'aNor', 'aCol', 'aUV']), U = MAIN.U;
+const SKY = program(SKY_VS, SKY_FS, ['aPos']);
+const skyBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, skyBuf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+
+// ---------- Textures ----------
+function glTex(cv, repeat = true) {
+  const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+  const pot = (cv.width & (cv.width - 1)) === 0 && (cv.height & (cv.height - 1)) === 0;
+  if (pot) { gl.generateMipmap(gl.TEXTURE_2D); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); }
+  else gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  const w = pot && repeat ? gl.REPEAT : gl.CLAMP_TO_EDGE; gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, w); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, w);
+  return t;
+}
+function updTex(t, cv) { gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv); gl.generateMipmap(gl.TEXTURE_2D); }
+function newCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+const WHITE = (() => { const c = newCanvas(4, 4), x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 4, 4); return glTex(c); })();
+// draws shape fn at (x,y) and its wrapped copies so 512 tiles are seamless
+function wrap(S, fn, x, y, pad = 90) { for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) { const X = x + dx, Y = y + dy; if (X > -pad && X < S + pad && Y > -pad && Y < S + pad) fn(X, Y); } }
+// ================= Chess rules engine (FIDE Laws of Chess + Chess960) =================
+const CH = (() => {
+  const N = [-16, -15, -10, -6, 6, 10, 15, 17].map(() => 0); // placeholder (not used)
+  const sq = (f, r) => r * 8 + f, F = s => s & 7, Rk = s => s >> 3;
+  const opp = c => c === 'w' ? 'b' : 'w';
+  const KN = [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]], KG = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  const DIAG = [[1, 1], [1, -1], [-1, 1], [-1, -1]], ORTH = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  function startPosition(c960, seed) {
+    let back = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
+    if (c960) { const rnd = n => Math.floor((seed !== undefined ? (seed = (seed * 9301 + 49297) % 233280) / 233280 : Math.random()) * n);
+      back = Array(8).fill(null); const free = () => back.map((v, i) => v ? -1 : i).filter(i => i >= 0);
+      back[[0, 2, 4, 6][rnd(4)]] = 'b'; back[[1, 3, 5, 7][rnd(4)]] = 'b';
+      let f = free(); back[f[rnd(f.length)]] = 'q'; f = free(); back[f[rnd(f.length)]] = 'n'; f = free(); back[f[rnd(f.length)]] = 'n';
+      f = free(); back[f[0]] = 'r'; back[f[1]] = 'k'; back[f[2]] = 'r'; }
+    const b = Array(64).fill(null);
+    for (let f = 0; f < 8; f++) { b[sq(f, 0)] = { c: 'w', t: back[f] }; b[sq(f, 1)] = { c: 'w', t: 'p' }; b[sq(f, 6)] = { c: 'b', t: 'p' }; b[sq(f, 7)] = { c: 'b', t: back[f] }; }
+    const rf = back.map((t, i) => t === 'r' ? i : -1).filter(i => i >= 0);
+    return { b, turn: 'w', castle: { w: { q: rf[0], k: rf[1] }, b: { q: rf[0], k: rf[1] } }, ep: null, half: 0, full: 1, c960: !!c960, back: back.join('') };
+  }
+  function kingSq(s, c) { for (let i = 0; i < 64; i++) { const p = s.b[i]; if (p && p.c === c && p.t === 'k') return i; } return -1; }
+  function attacked(b, t, by) { const f0 = F(t), r0 = Rk(t);
+    const pr = by === 'w' ? r0 - 1 : r0 + 1; for (const df of [-1, 1]) { const f = f0 + df; if (f >= 0 && f < 8 && pr >= 0 && pr < 8) { const p = b[sq(f, pr)]; if (p && p.c === by && p.t === 'p') return true; } }
+    for (const [df, dr] of KN) { const f = f0 + df, r = r0 + dr; if (f >= 0 && f < 8 && r >= 0 && r < 8) { const p = b[sq(f, r)]; if (p && p.c === by && p.t === 'n') return true; } }
+    for (const [df, dr] of KG) { const f = f0 + df, r = r0 + dr; if (f >= 0 && f < 8 && r >= 0 && r < 8) { const p = b[sq(f, r)]; if (p && p.c === by && p.t === 'k') return true; } }
+    for (const [dirs, ts] of [[DIAG, 'bq'], [ORTH, 'rq']]) for (const [df, dr] of dirs) { let f = f0 + df, r = r0 + dr; while (f >= 0 && f < 8 && r >= 0 && r < 8) { const p = b[sq(f, r)]; if (p) { if (p.c === by && ts.includes(p.t)) return true; break; } f += df; r += dr; } }
+    return false; }
+  const inCheck = (s, c) => attacked(s.b, kingSq(s, c), opp(c));
+  function pseudo(s) { const ms = [], c = s.turn, b = s.b, fwd = c === 'w' ? 1 : -1, home = c === 'w' ? 1 : 6, last = c === 'w' ? 7 : 0;
+    const add = (from, to, extra = {}) => { const m = Object.assign({ from, to, piece: b[from].t, cap: b[to] ? b[to].t : null }, extra);
+      if (m.piece === 'p' && Rk(to) === last && !extra.promo) { for (const pr of ['q', 'r', 'b', 'n']) ms.push(Object.assign({}, m, { promo: pr })); } else ms.push(m); };
+    for (let i = 0; i < 64; i++) { const p = b[i]; if (!p || p.c !== c) continue; const f0 = F(i), r0 = Rk(i);
+      if (p.t === 'p') { const r1 = r0 + fwd; if (r1 >= 0 && r1 < 8) { if (!b[sq(f0, r1)]) { add(i, sq(f0, r1)); if (r0 === home && !b[sq(f0, r0 + 2 * fwd)]) add(i, sq(f0, r0 + 2 * fwd), { dbl: true }); }
+          for (const df of [-1, 1]) { const f = f0 + df; if (f < 0 || f > 7) continue; const t = sq(f, r1); if (b[t] && b[t].c !== c) add(i, t); else if (s.ep === t) add(i, t, { ep: true, cap: 'p' }); } } continue; }
+      if (p.t === 'n' || p.t === 'k') { for (const [df, dr] of p.t === 'n' ? KN : KG) { const f = f0 + df, r = r0 + dr; if (f < 0 || f > 7 || r < 0 || r > 7) continue; const t = sq(f, r); if (!b[t] || b[t].c !== c) add(i, t); } continue; }
+      const dirs = p.t === 'b' ? DIAG : p.t === 'r' ? ORTH : DIAG.concat(ORTH);
+      for (const [df, dr] of dirs) { let f = f0 + df, r = r0 + dr; while (f >= 0 && f < 8 && r >= 0 && r < 8) { const t = sq(f, r); if (b[t]) { if (b[t].c !== c) add(i, t); break; } add(i, t); f += df; r += dr; } } }
+    // castling (works for standard chess and Chess960)
+    const rank = c === 'w' ? 0 : 7, ks = kingSq(s, c);
+    if (ks >= 0 && Rk(ks) === rank && !inCheck(s, c)) for (const side of ['k', 'q']) { const rf = s.castle[c][side]; if (rf === null || rf === undefined) continue;
+      const rs = sq(rf, rank), rook = b[rs]; if (!rook || rook.c !== c || rook.t !== 'r') continue;
+      const kf = F(ks), kTo = side === 'k' ? 6 : 2, rTo = side === 'k' ? 5 : 3, lo = Math.min(kf, kTo, rf, rTo), hi = Math.max(kf, kTo, rf, rTo); let ok = true;
+      for (let f = lo; f <= hi; f++) { const t = sq(f, rank); if (t !== ks && t !== rs && b[t]) { ok = false; break; } } if (!ok) continue;
+      const nb = b.slice(); nb[ks] = null; nb[rs] = null;
+      for (let f = Math.min(kf, kTo); f <= Math.max(kf, kTo); f++) { if (attacked(nb, sq(f, rank), opp(c))) { ok = false; break; } } if (!ok) continue;
+      ms.push({ from: ks, to: sq(kTo, rank), piece: 'k', cap: null, castle: side, rookFrom: rs, rookTo: sq(rTo, rank) }); }
+    return ms; }
+  function make(s, m) { const b = s.b.slice(), c = s.turn, p = b[m.from];
+    const castle = { w: Object.assign({}, s.castle.w), b: Object.assign({}, s.castle.b) };
+    if (m.castle) { const rook = b[m.rookFrom]; b[m.from] = null; b[m.rookFrom] = null; b[m.to] = p; b[m.rookTo] = rook; castle[c] = { k: null, q: null }; }
+    else { if (m.ep) b[sq(F(m.to), Rk(m.from))] = null; b[m.to] = m.promo ? { c, t: m.promo } : p; b[m.from] = null;
+      if (p.t === 'k') castle[c] = { k: null, q: null };
+      for (const cc of ['w', 'b']) for (const side of ['k', 'q']) { const rf = castle[cc][side]; if (rf === null || rf === undefined) continue; const rs = sq(rf, cc === 'w' ? 0 : 7); if (m.from === rs || m.to === rs) castle[cc][side] = null; } }
+    const ep = m.dbl ? (m.from + m.to) / 2 : null;
+    return { b, turn: opp(c), castle, ep, half: (p.t === 'p' || m.cap) ? 0 : s.half + 1, full: s.full + (c === 'b' ? 1 : 0), c960: s.c960, back: s.back }; }
+  function legal(s) { return pseudo(s).filter(m => { const n = make(s, m); return !attacked(n.b, kingSq(n, s.turn), n.turn); }); }
+  function key(s) { // position identity for repetition (FIDE 9.2): pieces, side to move, castling rights, *possible* en passant
+    let k = ''; for (let i = 0; i < 64; i++) { const p = s.b[i]; k += p ? (p.c === 'w' ? p.t.toUpperCase() : p.t) : '.'; }
+    k += s.turn + [s.castle.w.k, s.castle.w.q, s.castle.b.k, s.castle.b.q].map(v => v === null || v === undefined ? '-' : v).join('');
+    if (s.ep !== null && legal(s).some(m => m.ep)) k += 'e' + s.ep; return k; }
+  function insufficient(s) { const ps = s.b.map((p, i) => p && p.t !== 'k' ? { ...p, i } : null).filter(Boolean);
+    if (!ps.length) return true; if (ps.some(p => 'pqr'.includes(p.t))) return false;
+    if (ps.length === 1) return true; // K+B or K+N vs K
+    if (ps.every(p => p.t === 'b')) { const col = new Set(ps.map(p => (F(p.i) + Rk(p.i)) % 2)); return col.size === 1; } // bishops all on one colour
+    return false; }
+  function canMate(s, c) { // can colour c possibly checkmate (for flag-fall rule 6.9)
+    const ps = s.b.map((p, i) => p && p.c === c && p.t !== 'k' ? { ...p, i } : null).filter(Boolean); if (!ps.length) return false; if (ps.some(p => 'pqr'.includes(p.t))) return true;
+    const others = s.b.filter(p => p && p.c !== c && p.t !== 'k').length; if (ps.length === 1 && others === 0) return false; return true; }
+  const FILES = 'abcdefgh', LET = { k: 'K', q: 'Q', r: 'R', b: 'B', n: 'N', p: '' };
+  const name = i => FILES[F(i)] + (Rk(i) + 1);
+  function san(s, m, all) { let t;
+    if (m.castle) t = m.castle === 'k' ? 'O-O' : 'O-O-O';
+    else { t = LET[m.piece];
+      if (m.piece !== 'p') { const amb = all.filter(o => o !== m && o.piece === m.piece && o.to === m.to && o.from !== m.from && !o.castle);
+        if (amb.length) { const sf = amb.some(o => F(o.from) === F(m.from)), sr = amb.some(o => Rk(o.from) === Rk(m.from)); t += !sf ? FILES[F(m.from)] : !sr ? (Rk(m.from) + 1) : name(m.from); } }
+      else if (m.cap) t += FILES[F(m.from)];
+      if (m.cap) t += 'x'; t += name(m.to); if (m.promo) t += '=' + LET[m.promo]; }
+    const n = make(s, m); if (inCheck(n, n.turn)) t += legal(n).length ? '+' : '#'; return t; }
+  function perft(s, d) { if (d === 0) return 1; let n = 0; for (const m of legal(s)) n += perft(make(s, m), d - 1); return n; }
+  function fromFEN(fen) { const [bd, turn, cs, ep, half, full] = fen.split(' '), b = Array(64).fill(null); let r = 7, f = 0;
+    for (const ch of bd) { if (ch === '/') { r--; f = 0; continue; } if (/\d/.test(ch)) { f += +ch; continue; } b[sq(f, r)] = { c: ch === ch.toUpperCase() ? 'w' : 'b', t: ch.toLowerCase() }; f++; }
+    const castle = { w: { k: null, q: null }, b: { k: null, q: null } }; let c960 = false;
+    for (const ch of cs) { if (ch === '-') continue; const c = ch === ch.toUpperCase() ? 'w' : 'b', rank = c === 'w' ? 0 : 7, kf = F(b.findIndex((p, i) => p && p.c === c && p.t === 'k' && Rk(i) === rank));
+      if ('Kk'.includes(ch)) castle[c].k = 7; else if ('Qq'.includes(ch)) castle[c].q = 0; else { c960 = true; const f = 'abcdefgh'.indexOf(ch.toLowerCase()); castle[c][f > kf ? 'k' : 'q'] = f; } }
+    return { b, turn, castle, ep: ep === '-' ? null : FILES.indexOf(ep[0]) + (ep[1] - 1) * 8, half: +half || 0, full: +full || 1, c960 }; }
+  return { startPosition, legal, make, inCheck, key, insufficient, canMate, san, perft, fromFEN, name, sq, F, Rk, opp, kingSq };
+})();
+
+
+// ---------- Time controls (FIDE categories) ----------
+const TCS = [
+  { id: 'santai', n: '♟️ Santai', d: 'Tanpa jam · boleh batal langkah', base: 0, inc: 0 },
+  { id: 'bullet', n: '🔫 Bullet 1+0', d: '1 menit · versi kilat (populer online)', base: 60, inc: 0 },
+  { id: 'blitz3', n: '⚡ Blitz 3+2', d: '3 mnt + 2 dtk/langkah · Kejuaraan Dunia Blitz', base: 180, inc: 2 },
+  { id: 'blitz5', n: '⚡ Blitz 5+0', d: '5 menit · blitz klasik', base: 300, inc: 0 },
+  { id: 'rapid10', n: '⏱️ Rapid 10+5', d: '10 mnt + 5 dtk/langkah', base: 600, inc: 5 },
+  { id: 'rapid15', n: '⏱️ Rapid 15+10', d: '15 mnt + 10 dtk · Kejuaraan Dunia Rapid', base: 900, inc: 10 },
+  { id: 'klasik', n: '🏛️ Klasik 90+30', d: '90 mnt + 30 dtk · standar turnamen FIDE', base: 5400, inc: 30 },
+];
+let tcId = load('csTc') || 'rapid10', variant = +(load('csVar') || 0), autoRot = load('csRot') !== '0';
+
+// ---------- Audio ----------
+const AU = { ctx: null, master: null, noise: null, muted: load('csMuted') === '1' };
+function audioInit() { try { if (!AU.ctx) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return; const c = AU.ctx = new A(); AU.master = c.createGain(); AU.master.gain.value = AU.muted ? 0 : .8; AU.master.connect(c.destination);
+  const len = c.sampleRate; AU.noise = c.createBuffer(1, len, c.sampleRate); const d = AU.noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; } if (AU.ctx.state === 'suspended') AU.ctx.resume(); } catch (e) {} }
+function tone(f, dur, vol, t0, type = 'sine', slide = 0) { const c = AU.ctx, t = t0 || c.currentTime, o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * slide), t + dur);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + dur); o.connect(g); g.connect(AU.master); o.start(t); o.stop(t + dur + .05); }
+function noise(dur, vol, ft, fq, t0) { const c = AU.ctx, t = t0 || c.currentTime, s = c.createBufferSource(); s.buffer = AU.noise; const f = c.createBiquadFilter(); f.type = ft; f.frequency.value = fq; f.Q.value = 1.5; const g = c.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur); s.connect(f); f.connect(g); g.connect(AU.master); s.start(t, Math.random() * .5); s.stop(t + dur + .02); }
+const clack = (t, v = 1) => { noise(.07, .35 * v, 'bandpass', 1800, t); tone(180, .09, .18 * v, t, 'sine', .6); };
+function sfx(n) { if (!AU.ctx || AU.ctx.state !== 'running') return; const now = AU.ctx.currentTime;
+  try { switch (n) {
+    case 'move': clack(now); break; case 'cap': clack(now, 1.2); clack(now + .06, .7); break; case 'castle': clack(now); clack(now + .12, .8); break;
+    case 'check': tone(1320, .5, .1, now, 'triangle'); tone(1760, .4, .06, now + .08, 'triangle'); break;
+    case 'promo': [72, 76, 79, 84].forEach((m, i) => tone(440 * Math.pow(2, (m - 69) / 12), .4, .08, now + i * .06, 'triangle')); break;
+    case 'end': [60, 64, 67, 72].forEach((m, i) => tone(440 * Math.pow(2, (m - 69) / 12), .8, .1, now + i * .12, 'triangle')); break;
+    case 'tick': tone(1500, .04, .05, now, 'square'); break; case 'no': tone(200, .1, .06, now, 'square'); break; case 'tap': tone(900, .05, .04, now, 'triangle'); break;
+  } } catch (e) {} }
+
+// ---------- Board & pieces 3D ----------
+const LIGHT = hx('#f0d9b5'), DARK = hx('#b07a52'), WHITE_P = hx('#f4e8d2'), BLACK_P = hx('#2e2620');
+const PIECE_MESH = {}, sqX = f => f - 3.5, sqZ = r => 3.5 - r;
+function labelTex() { const cv = newCanvas(1024, 1024), g = cv.getContext('2d'), u = 1024 / 9.4; g.fillStyle = '#6a4024'; g.fillRect(0, 0, 1024, 1024);
+  R = mulberry(2); for (let i = 0; i < 120; i++) { g.strokeStyle = `rgba(${R() < .5 ? '40,20,8' : '150,100,60'},${rr(.15, .35)})`; g.lineWidth = rr(1, 4); const y = rr(0, 1024); g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(300, y + rr(-10, 10), 700, y + rr(-10, 10), 1024, y); g.stroke(); } R = Math.random;
+  g.fillStyle = '#f6e2c2'; g.font = '800 42px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (let f = 0; f < 8; f++) { const x = (f + .5 + .7) * u; g.fillText('abcdefgh'[f], x, 1024 - .35 * u); g.save(); g.translate(x, .35 * u); g.rotate(Math.PI); g.fillText('abcdefgh'[f], 0, 0); g.restore(); }
+  for (let r = 0; r < 8; r++) { const y = (7 - r + .5 + .7) * u; g.fillText(String(r + 1), .35 * u, y); g.save(); g.translate(1024 - .35 * u, y); g.rotate(Math.PI); g.fillText(String(r + 1), 0, 0); g.restore(); }
+  return cv; }
+function woodTex(a, b) { const cv = newCanvas(512, 512), g = cv.getContext('2d'); g.fillStyle = a; g.fillRect(0, 0, 512, 512); R = mulberry(9);
+  for (let i = 0; i < 140; i++) { g.strokeStyle = `rgba(${R() < .5 ? b : '255,230,200'},${rr(.06, .2)})`; g.lineWidth = rr(1, 5); const y = rr(0, 512); g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(170, y + rr(-12, 12), 340, y + rr(-12, 12), 512, y); g.stroke(); } R = Math.random; return cv; }
+function squareTex(light) { const cv = newCanvas(128, 128), g = cv.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, 128, 128); R = mulberry(light ? 3 : 7);
+  for (let i = 0; i < 30; i++) { g.strokeStyle = `rgba(${light ? '160,120,70' : '70,35,15'},${rr(.05, .14)})`; g.lineWidth = rr(1, 3); const y = rr(0, 128); g.beginPath(); g.moveTo(0, y); g.bezierCurveTo(40, y + rr(-4, 4), 90, y + rr(-4, 4), 128, y); g.stroke(); } R = Math.random; return cv; }
+let BOARD = null, TEXS = {}, HL = null, DOT = null, RING = null, ENVM = null;
+function buildBoard() {
+  let gL = new Geo(), gD = new Geo(); for (let f = 0; f < 8; f++) for (let r = 0; r < 8; r++) ((f + r) % 2 ? gL : gD).box(T(sqX(f), -.05, sqZ(r), 1, .1, 1), (f + r) % 2 ? LIGHT : DARK, 0, 1, 1);
+  const fr = new Geo(); fr.box(T(0, -.16, 0, 9.4, .3, 9.4), hx('#5a3418'), 0, 2, 2); const lb = new Geo(); lb.quad(I, [-4.7, -.006, 4.7], [4.7, -.006, 4.7], [4.7, -.006, -4.7], [-4.7, -.006, -4.7], [1, 1, 1], 0, [[0, 1], [1, 1], [1, 0], [0, 0]]);
+  BOARD = { L: gL.build(), D: gD.build(), frame: fr.build(), label: lb.build() };
+  TEXS = { label: glTex(labelTex(), false), sqL: glTex(squareTex(true)), sqD: glTex(squareTex(false)), wood: glTex(woodTex('#3a2414', '20,10,4')), table: glTex(woodTex('#7a4a2a', '40,20,8')) };
+  let g = new Geo(); g.quad(I, [-.5, .004, .5], [.5, .004, .5], [.5, .004, -.5], [-.5, .004, -.5], [1, 1, 1], 1); HL = g.build();
+  g = new Geo(); g.cyl(I, 0, .004, .012, 0, .16, .16, [1, 1, 1], 1, 20); DOT = g.build();
+  g = new Geo(); g.lathe(I, [[.012, .46], [.012, .38], [.004, .38], [.004, .46]], 32, [1, 1, 1], 1); RING = g.build();
+  g = new Geo(); g.box(T(0, -.45, 0, 26, .5, 18), [1, 1, 1], 0, 4, 3); g.box(T(0, -8, 0, 120, .2, 120), hx('#24180f'), 0);
+  for (const s of [-1, 1]) { g.cyl(I, s * 8.5, -.2, .05, -4, 1.1, 1.1, hx('#3a2a1e'), 0, 20); } ENVM = g.build(); }
+function buildPieces() {
+  const P = {
+    p: g => { g.lathe(I, [[.46, .07], [.43, .13], [.4, .09], [.17, .14], [.11, .2], [.05, .25], [0, .26], [0, 0]], 28, C); g.ell(I, 0, .56, 0, .14, .14, .14, C, 0, 20); },
+    r: g => { g.lathe(I, [[.66, .0], [.66, .2], [.5, .2], [.47, .16], [.22, .18], [.13, .23], [.05, .27], [0, .28], [0, 0]], 28, C); for (let k = 0; k < 6; k++) { const a = k / 6 * TAU; g.box(T(Math.cos(a) * .16, .72, Math.sin(a) * .16, .09, .12, .08, -a), C); } },
+    n: g => { g.lathe(I, [[.3, .17], [.24, .19], [.13, .24], [.05, .28], [0, .29], [0, 0]], 28, C);
+      g.box(T(0, .46, -.04, .2, .42, .24, 0, -.25, 0), C); g.ell(T(0, .66, .08, 1, 1, 1, 0, .55, 0), 0, 0, 0, .11, .1, .21, C, 0, 16); g.ell(I, 0, .6, .26, .085, .08, .08, C, 0, 12);
+      g.box(T(0, .56, -.13, .05, .38, .1, 0, -.35, 0), C); for (const s of [-1, 1]) { g.box(T(s * .05, .8, -.02, .04, .1, .05, 0, -.2, s * .2), C); g.ell(I, s * .1, .68, .14, .022, .022, .022, [.05, .04, .04], 0, 8); } },
+    b: g => { g.lathe(I, [[.6, .1], [.5, .1], [.46, .13], [.43, .08], [.2, .14], [.12, .21], [.05, .26], [0, .27], [0, 0]], 28, C); g.ell(I, 0, .74, 0, .13, .19, .13, C, 0, 20); g.ell(I, 0, .95, 0, .045, .045, .045, C, 0, 10);
+      g.box(T(.02, .8, .07, .02, .18, .14, 0, 0, .6), shade(C, .55)); },
+    q: g => { g.lathe(I, [[.94, .0], [.92, .07], [.86, .17], [.78, .13], [.7, .11], [.66, .15], [.62, .1], [.25, .16], [.14, .23], [.06, .28], [0, .29], [0, 0]], 28, C);
+      for (let k = 0; k < 9; k++) { const a = k / 9 * TAU; g.ell(I, Math.cos(a) * .16, .88, Math.sin(a) * .16, .04, .04, .04, C, 0, 8); } g.ell(I, 0, .97, 0, .055, .055, .055, C, 0, 10); },
+    k: g => { g.lathe(I, [[.92, .0], [.9, .13], [.82, .18], [.76, .13], [.7, .16], [.65, .1], [.26, .17], [.15, .24], [.06, .29], [0, .3], [0, 0]], 28, C);
+      g.box(T(0, 1.04, 0, .055, .24, .055), C); g.box(T(0, 1.06, 0, .18, .055, .055), C); },
+  };
+  let C;
+  for (const [c, col] of [['w', WHITE_P], ['b', BLACK_P]]) for (const t in P) { C = col; const g = new Geo(); P[t](g); PIECE_MESH[c + t] = g.build(); } }
+
+// ---------- Game state ----------
+let G = null; // { s, hist:[{s, m, san}], keys:{}, clock:{w,b}, running, over, result, tc, names, flipBase }
+const SYMB = { w: { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' }, b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' } }, VAL = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+let sel = -1, targets = new Map(), anims = [], capFx = [], viewYaw = 0, yawTarget = 0, mode = 'menu', lastTick = -1;
+function newGame() { const tc = TCS.find(t => t.id === tcId) || TCS[0], s = CH.startPosition(variant === 1);
+  G = { s, start: s, hist: [], keys: {}, clock: { w: tc.base, b: tc.base }, running: false, over: false, result: '', reason: '', tc, names: { w: ($('inW').value || 'Putih').trim(), b: ($('inB').value || 'Hitam').trim() } };
+  G.keys[CH.key(s)] = 1; sel = -1; targets.clear(); anims = []; capFx = []; yawTarget = 0; viewYaw = 0; lastTick = -1;
+  $('nmw').textContent = '♔ ' + G.names.w; $('nmb').textContent = '♚ ' + G.names.b; $('bUndo').classList.toggle('hidden', tc.base > 0);
+  mode = 'play'; for (const id of ['menu', 'pop', 'rules']) show(id, false); for (const id of ['top', 'side', 'status']) show(id, true); refresh();
+  if (variant === 1) toast960(); }
+function toast960() { popup(`<div class="big2">🎲</div><h2>Chess960</h2><p>Posisi awal bidak belakang diacak: <b style="font-size:20px;letter-spacing:2px">${G.s.back.toUpperCase().split('').map(t => SYMB.w[t.toLowerCase()]).join('')}</b><br>Gajah selalu di warna berbeda, raja di antara dua benteng. Rokade tetap bisa: raja ke kolom g/c, benteng ke f/d.</p><button class="btn gold" id="pa">Siap! ♟️</button>`); $('pa').onclick = () => show('pop', false); }
+const show = (id, on) => $(id).classList.toggle('hidden', !on);
+function popup(html) { $('popCard').innerHTML = html; show('pop', true); }
+function legalFrom(i) { return CH.legal(G.s).filter(m => m.from === i); }
+function selectSq(i) { sel = i; targets.clear(); if (i < 0) return; for (const m of legalFrom(i)) { const list = targets.get(m.to) || []; list.push(m); targets.set(m.to, list); if (m.castle && m.rookFrom !== m.to) { const l2 = targets.get(m.rookFrom) || []; l2.push(m); targets.set(m.rookFrom, l2); } } }
+function tapSquare(i) { if (mode !== 'play' || G.over || anims.length) return; const p = G.s.b[i];
+  if (sel >= 0 && targets.has(i)) { const ms = targets.get(i); if (ms[0].promo) askPromo(ms); else doMove(ms[0]); return; }
+  if (p && p.c === G.s.turn) { if (sel === i) { selectSq(-1); return; } selectSq(i); sfx('tap'); return; }
+  if (sel >= 0) { sfx('no'); } selectSq(-1); }
+function askPromo(ms) { const c = G.s.turn; popup(`<h2>Promosi pion! 👑</h2><p>Pilih bidak pengganti:</p><div class="promo">${['q', 'r', 'b', 'n'].map(t => `<button data-t="${t}">${SYMB[c][t]}</button>`).join('')}</div><button class="btn" id="pc">Batal</button>`);
+  document.querySelectorAll('.promo button').forEach(b => b.onclick = () => { show('pop', false); doMove(ms.find(m => m.promo === b.dataset.t)); }); $('pc').onclick = () => show('pop', false); }
+function doMove(m) { const s0 = G.s, all = CH.legal(s0), san = CH.san(s0, m, all), mover = s0.turn;
+  const fromP = s0.b[m.from], capP = m.ep ? { c: CH.opp(mover), t: 'p' } : s0.b[m.to] && !m.castle ? s0.b[m.to] : null;
+  G.s = CH.make(s0, m); G.hist.push({ s: s0, m, san, clock: { ...G.clock } }); const k = CH.key(G.s); G.keys[k] = (G.keys[k] || 0) + 1;
+  // animation
+  const xz = i => [sqX(CH.F(i)), sqZ(CH.Rk(i))];
+  anims = [{ to: m.to, a: xz(m.from), b: xz(m.to), t: 0, dur: .26, hop: m.piece === 'n' ? .55 : .12 }]; if (m.castle) anims.push({ to: m.rookTo, a: xz(m.rookFrom), b: xz(m.rookTo), t: 0, dur: .3, hop: .3 });
+  if (capP) { const at = m.ep ? CH.sq(CH.F(m.to), CH.Rk(m.from)) : m.to; capFx.push({ key: capP.c + capP.t, pos: xz(at), t: 0 }); }
+  // clock
+  if (G.tc.base > 0) { if (G.running || mover === 'w') { G.clock[mover] += G.tc.inc; } if (mover === 'w' && !G.running) G.running = true; }
+  selectSq(-1); sfx(san.includes('#') || san.includes('+') ? 'check' : m.castle ? 'castle' : m.promo ? 'promo' : capP ? 'cap' : 'move');
+  if (autoRot) yawTarget = G.s.turn === 'w' ? 0 : Math.PI;
+  checkEnd(); refresh(); }
+function checkEnd() { const s = G.s, L = CH.legal(s), c = s.turn;
+  if (!L.length) { if (CH.inCheck(s, c)) finish(c === 'w' ? '0-1' : '1-0', 'Skakmat!'); else finish('1/2-1/2', 'Pat (stalemate): raja tidak skak tapi tidak ada langkah legal'); return; }
+  if (CH.insufficient(s)) { finish('1/2-1/2', 'Posisi mati: materi tidak cukup untuk skakmat'); return; }
+  if ((G.keys[CH.key(s)] || 0) >= 5) { finish('1/2-1/2', 'Posisi sama terulang 5 kali (otomatis remis)'); return; }
+  if (s.half >= 150) { finish('1/2-1/2', 'Aturan 75 langkah tanpa makan/gerak pion (otomatis remis)'); return; } }
+function claimable() { if (!G || G.over) return ''; if ((G.keys[CH.key(G.s)] || 0) >= 3) return '3x posisi sama'; if (G.s.half >= 100) return 'aturan 50 langkah'; return ''; }
+function finish(result, reason) { G.over = true; G.result = result; G.reason = reason; G.running = false; sfx('end'); refresh();
+  const who = result === '1-0' ? G.names.w : result === '0-1' ? G.names.b : null, icon = who ? (result === '1-0' ? '♔' : '♚') : '🤝';
+  setTimeout(() => { popup(`<div class="big2">${icon}</div><h2>${who ? `${who} menang! 🏆` : 'Remis!'}</h2><p>${reason}<br><b>${result.replace('1/2', '½').replace('1/2', '½')}</b> · ${Math.ceil(G.hist.length / 2)} langkah</p>
+    <button class="btn gold" id="pa">🔄 Main Lagi</button><button class="btn" id="pgn">📋 Salin PGN</button><button class="btn" id="pv">👀 Lihat Papan</button><button class="btn" id="pm">🏠 Menu</button>`);
+    $('pa').onclick = () => { sfx('tap'); newGame(); }; $('pm').onclick = toMenu; $('pv').onclick = () => show('pop', false);
+    $('pgn').onclick = () => { const t = pgn(); (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { $('pgn').textContent = '✅ Tersalin'; }).catch(() => { prompt('Salin PGN:', t); }); }; }, 650); }
+function toFEN(s) { let out = ''; for (let r = 7; r >= 0; r--) { let e = 0; for (let f = 0; f < 8; f++) { const p = s.b[r * 8 + f]; if (!p) { e++; continue; } if (e) { out += e; e = 0; } out += p.c === 'w' ? p.t.toUpperCase() : p.t; } if (e) out += e; if (r) out += '/'; }
+  let cs = ''; for (const [c, up] of [['w', true], ['b', false]]) for (const side of ['k', 'q']) { const f = s.castle[c][side]; if (f === null || f === undefined) continue; let ch = s.c960 ? 'ABCDEFGH'[f] : side.toUpperCase(); cs += up ? ch : ch.toLowerCase(); }
+  return `${out} ${s.turn} ${cs || '-'} ${s.ep !== null ? CH.name(s.ep) : '-'} ${s.half} ${s.full}`; }
+function pgn() { const d = new Date(), date = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+  let h = `[Event "Catur Shafa 3D"]\n[Site "shafaauray.github.io/game-shafa"]\n[Date "${date}"]\n[White "${G.names.w}"]\n[Black "${G.names.b}"]\n[Result "${G.result || '*'}"]\n[TimeControl "${G.tc.base ? G.tc.base + '+' + G.tc.inc : '-'}"]\n`;
+  if (G.start.c960) h += `[Variant "Chess960"]\n[SetUp "1"]\n[FEN "${toFEN(G.start)}"]\n`;
+  let mv = ''; G.hist.forEach((x, i) => { if (i % 2 === 0) mv += (i / 2 + 1) + '. '; mv += x.san + ' '; }); return h + '\n' + mv + (G.result || '*'); }
+function toMenu() { mode = 'menu'; show('pop', false); for (const id of ['top', 'side', 'status']) show(id, false); show('menu', true); }
+
+// ---------- UI refresh ----------
+const fmtClock = t => { if (t <= 0) return '0:00'; if (t < 20) return t.toFixed(1); const m = Math.floor(t / 60), s = Math.floor(t % 60); return m >= 60 ? Math.floor(m / 60) + ':' + String(m % 60).padStart(2, '0') + ':' + String(s).padStart(2, '0') : m + ':' + String(s).padStart(2, '0'); };
+function refresh() { const s = G.s, turn = s.turn;
+  $('pcw').classList.toggle('on', !G.over && turn === 'w'); $('pcb').classList.toggle('on', !G.over && turn === 'b');
+  const capd = { w: [], b: [] }; for (const x of G.hist) { const m = x.m; if (m.cap && !m.castle) capd[x.s.turn].push(m.ep ? 'p' : m.cap); }
+  const mat = c => capd[c].reduce((a, t) => a + VAL[t], 0), diff = mat('w') - mat('b'), order = 'qrbnp';
+  for (const c of ['w', 'b']) { const syms = capd[c].sort((a, b) => order.indexOf(a) - order.indexOf(b)).map(t => SYMB[CH.opp(c)][t]).join(''); const d = c === 'w' ? diff : -diff; $('cap' + c).textContent = syms + (d > 0 ? '  +' + d : ''); }
+  const ck = CH.inCheck(s, turn), st = $('status');
+  st.textContent = G.over ? (G.result === '1/2-1/2' ? '🤝 Remis' : `🏆 ${G.result === '1-0' ? G.names.w : G.names.b} menang`) : (ck ? '⚠️ SKAK! ' : '') + `Giliran ${turn === 'w' ? '♔ ' + G.names.w : '♚ ' + G.names.b}`;
+  st.classList.toggle('check', ck && !G.over);
+  let html = ''; for (let i = 0; i < G.hist.length; i += 2) html += `<div class="r"><span class="n">${i / 2 + 1}.</span><span class="${i === G.hist.length - 1 ? 'last' : ''}">${G.hist[i].san}</span><span class="${i + 1 === G.hist.length - 1 ? 'last' : ''}">${G.hist[i + 1] ? G.hist[i + 1].san : ''}</span></div>`;
+  const mv = $('moves'); mv.innerHTML = html || '<div style="opacity:.6;font-size:12px">Belum ada langkah. Putih jalan duluan ♔</div>'; mv.scrollTop = mv.scrollHeight; mv.scrollLeft = mv.scrollWidth;
+  const cl = claimable(); $('bClaim').classList.toggle('hidden', !cl); if (cl) $('bClaim').textContent = '⚖️ Klaim remis (' + cl + ')';
+  for (const id of ['bDraw', 'bResign', 'bUndo']) $(id).disabled = G.over; updClock(); }
+function updClock() { for (const c of ['w', 'b']) { const t = G.clock[c]; $('ck' + c).textContent = G.tc.base ? fmtClock(t) : '∞'; $('pc' + c).classList.toggle('low', !!G.tc.base && t < 20 && !G.over); } }
+
+// ---------- Rules page ----------
+$('rulesBody').innerHTML = `<h2>📖 Aturan Catur (FIDE)</h2>
+<p>Catur dimainkan 2 orang di papan 8×8. <b>Putih selalu jalan duluan</b>, lalu bergantian. Tujuannya: <b>skakmat</b> raja lawan, yaitu raja diserang dan tidak bisa lolos dengan langkah apa pun.</p>
+<h3>♟️ Gerak Bidak</h3><table>
+<tr><td class="pz">♔</td><td><b>Raja</b>: 1 kotak ke segala arah. Tidak boleh pindah ke kotak yang diserang lawan.</td></tr>
+<tr><td class="pz">♕</td><td><b>Ratu (Menteri)</b>: lurus atau diagonal, sejauh apa pun selama tidak terhalang.</td></tr>
+<tr><td class="pz">♖</td><td><b>Benteng</b>: lurus (horizontal/vertikal) sejauh apa pun.</td></tr>
+<tr><td class="pz">♗</td><td><b>Gajah (Peluncur)</b>: diagonal sejauh apa pun, selalu di warna kotak yang sama.</td></tr>
+<tr><td class="pz">♘</td><td><b>Kuda</b>: bentuk huruf "L" (2 + 1 kotak) dan satu-satunya bidak yang bisa melompati bidak lain.</td></tr>
+<tr><td class="pz">♙</td><td><b>Pion</b>: maju 1 kotak (2 kotak saat langkah pertama), tapi <b>memakan secara diagonal</b> 1 kotak ke depan.</td></tr></table>
+<h3>✨ Langkah Khusus</h3><ul>
+<li><b>Rokade</b>: raja bergerak 2 kotak ke arah benteng, lalu benteng melompat ke sisi sebelahnya. Syarat: raja &amp; benteng itu belum pernah bergerak, kotak di antaranya kosong, raja tidak sedang di-skak, dan tidak melewati/berakhir di kotak yang diserang. Di game ini: tap raja lalu tap kotak tujuan raja (atau tap bentengnya).</li>
+<li><b>En passant</b>: kalau pion lawan maju 2 kotak dan mendarat tepat di samping pionmu, kamu boleh memakannya seolah ia maju 1 kotak, tapi <b>hanya di langkah berikutnya</b>.</li>
+<li><b>Promosi</b>: pion yang sampai baris terakhir wajib diganti jadi ratu, benteng, gajah, atau kuda (bebas pilih).</li></ul>
+<h3>⚠️ Skak &amp; Skakmat</h3><ul><li><b>Skak</b>: raja sedang diserang. Kamu wajib menyelamatkannya (pindah, tutup, atau makan penyerangnya). Langkah yang membuat rajamu sendiri terserang tidak sah.</li><li><b>Skakmat</b>: raja di-skak dan tidak ada cara menyelamatkannya, sehingga permainan selesai.</li></ul>
+<h3>🤝 Hasil Remis (Seri)</h3><ul>
+<li><b>Pat (stalemate)</b>: pemain yang giliran jalan tidak skak, tapi tidak punya langkah sah sama sekali.</li>
+<li><b>Posisi mati</b>: tidak mungkin terjadi skakmat lagi, misalnya raja lawan raja, atau raja + gajah/kuda lawan raja.</li>
+<li><b>Pengulangan 3x</b>: posisi yang sama muncul 3 kali, dan pemain yang giliran boleh <b>klaim</b> remis. Kalau sampai 5 kali, otomatis remis.</li>
+<li><b>Aturan 50 langkah</b>: 50 langkah (tiap pemain) tanpa makan bidak dan tanpa gerak pion, maka boleh klaim remis. Kalau sampai 75 langkah, otomatis remis.</li>
+<li><b>Kesepakatan</b>: satu pemain menawarkan remis dan lawannya setuju.</li></ul>
+<h3>⏱️ Jenis Permainan (Waktu)</h3><p>FIDE membagi catur berdasarkan total waktu tiap pemain (dihitung untuk 60 langkah):</p><ul>
+<li><b>Klasik / Standar</b>: 60 menit atau lebih, misalnya 90 menit + 30 detik per langkah di turnamen besar FIDE.</li>
+<li><b>Rapid</b>: lebih dari 10 sampai kurang dari 60 menit, misalnya 15 menit + 10 detik (Kejuaraan Dunia Rapid).</li>
+<li><b>Blitz</b>: 10 menit atau kurang, misalnya 3 menit + 2 detik (Kejuaraan Dunia Blitz).</li>
+<li><b>Bullet</b>: kurang dari 3 menit. Bukan kategori resmi FIDE, tapi populer di catur online.</li></ul>
+<p>"+2 detik" artinya <b>tambahan waktu</b> setiap selesai melangkah. Jam Putih mulai berjalan setelah langkah pertama Putih. Kalau waktumu habis, kamu kalah, <b>kecuali</b> lawan sudah tidak mungkin men-skakmat (hasilnya remis).</p>
+<h3>🎲 Chess960 (Fischer Random)</h3><p>Varian resmi FIDE ciptaan Bobby Fischer. Pion tetap di tempatnya, tapi bidak belakang diacak (960 kemungkinan): gajah selalu di warna berbeda dan raja di antara dua benteng. Aturan lainnya sama, termasuk rokade: setelah rokade, raja &amp; benteng berakhir di kolom yang sama seperti catur biasa (g &amp; f, atau c &amp; d).</p>
+<h3>🏳️ Lain-lain</h3><ul><li><b>Menyerah</b>: kamu langsung kalah. Tapi kalau lawan sudah tidak mungkin men-skakmat, hasilnya remis.</li><li><b>Notasi</b>: K=Raja, Q=Ratu, R=Benteng, B=Gajah, N=Kuda, x=makan, +=skak, #=skakmat, O-O / O-O-O = rokade pendek/panjang.</li></ul>`;
+
+// ---------- Rendering ----------
+const VP = mat(), Pm = mat(), V = mat(), M = mat(), INV = mat();
+let W = 0, H = 0, renderScale = DPR0, eyeP = [0, 0, 0], time = 0;
+function resize() { W = innerWidth; H = innerHeight; canvas.width = Math.max(1, Math.floor(W * renderScale)); canvas.height = Math.max(1, Math.floor(H * renderScale)); }
+addEventListener('resize', resize);
+let curTex = null, curBuf = null;
+function draw(mesh, m, texture, spec = 0) { if (!mesh || !mesh.count) return; if (curBuf !== mesh.buf) { gl.bindBuffer(gl.ARRAY_BUFFER, mesh.buf); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 48, 0); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 48, 12); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, 48, 24); gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 48, 40); curBuf = mesh.buf; }
+  const t = texture || WHITE; if (t !== curTex) { gl.bindTexture(gl.TEXTURE_2D, t); curTex = t; } gl.uniformMatrix4fv(U.uM, false, m); gl.uniform1f(U.uSpec, spec); gl.uniform1f(U.uSway, 0); gl.uniform1f(U.uSwayTop, 0); gl.drawArrays(gl.TRIANGLES, 0, mesh.count); }
+function project(p) { const m = VP, cx = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], cy = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], cw = m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15]; return [(cx / cw * .5 + .5) * W, (1 - (cy / cw * .5 + .5)) * H]; }
+function invert(out, m) { const a = m, b = []; const a00 = a[0], a01 = a[1], a02 = a[2], a03 = a[3], a10 = a[4], a11 = a[5], a12 = a[6], a13 = a[7], a20 = a[8], a21 = a[9], a22 = a[10], a23 = a[11], a30 = a[12], a31 = a[13], a32 = a[14], a33 = a[15];
+  const b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10, b03 = a01 * a12 - a02 * a11, b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12, b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30, b08 = a20 * a33 - a23 * a30, b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+  let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06; if (!det) return null; det = 1 / det;
+  out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det; out[1] = (a02 * b10 - a01 * b11 - a03 * b09) * det; out[2] = (a31 * b05 - a32 * b04 + a33 * b03) * det; out[3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+  out[4] = (a12 * b08 - a10 * b11 - a13 * b07) * det; out[5] = (a00 * b11 - a02 * b08 + a03 * b07) * det; out[6] = (a32 * b02 - a30 * b05 - a33 * b01) * det; out[7] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+  out[8] = (a10 * b10 - a11 * b08 + a13 * b06) * det; out[9] = (a01 * b08 - a00 * b10 - a03 * b06) * det; out[10] = (a30 * b04 - a31 * b02 + a33 * b00) * det; out[11] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+  out[12] = (a11 * b07 - a10 * b09 - a12 * b06) * det; out[13] = (a00 * b09 - a01 * b07 + a02 * b06) * det; out[14] = (a31 * b01 - a30 * b03 - a32 * b00) * det; out[15] = (a20 * b03 - a21 * b01 + a22 * b00) * det; return out; }
+function pickSquare(px, py) { if (!invert(INV, VP)) return -1; const nx = px / W * 2 - 1, ny = 1 - py / H * 2;
+  const un = (z) => { const m = INV, x = m[0] * nx + m[4] * ny + m[8] * z + m[12], y = m[1] * nx + m[5] * ny + m[9] * z + m[13], zz = m[2] * nx + m[6] * ny + m[10] * z + m[14], w = m[3] * nx + m[7] * ny + m[11] * z + m[15]; return [x / w, y / w, zz / w]; };
+  const a = un(-1), b = un(1), t = (0 - a[1]) / (b[1] - a[1]); if (!(t > 0)) return -1; const x = a[0] + (b[0] - a[0]) * t, z = a[2] + (b[2] - a[2]) * t;
+  const f = Math.floor(x + 4), r = Math.floor(4 - z); return f >= 0 && f < 8 && r >= 0 && r < 8 ? CH.sq(f, r) : -1; }
+function viewRect() { let x0 = 0, y0 = 0, x1 = W, y1 = H; if (mode === 'play') { const top = $('top').getBoundingClientRect(); y0 = top.bottom + 34; const sd = $('side').getBoundingClientRect(); if (sd.top > H * .4) y1 = sd.top - 6; else x1 = sd.left - 6; } return { x: x0, y: y0, w: x1 - x0, h: Math.max(100, y1 - y0) }; }
+function setCam(vr, dist, yaw, pitch) { const fov = 36 * Math.PI / 180, tgt = [0, .2, 0]; eyeP = [Math.sin(yaw) * Math.cos(pitch) * dist, tgt[1] + Math.sin(pitch) * dist, Math.cos(yaw) * Math.cos(pitch) * dist];
+  perspective(Pm, fov, W / H, .1, 200); Pm[8] = -((vr.x + vr.w / 2) / W * 2 - 1); Pm[9] = ((vr.y + vr.h / 2) / H * 2 - 1); lookAt(V, eyeP, tgt); mul(VP, Pm, V); }
+const BOXP = []; for (const x of [-4.75, 4.75]) for (const z of [-4.75, 4.75]) for (const y of [0, 1.0]) BOXP.push([x, y, z]);
+function fit(vr, yaw, pitch) { let lo = 3, hi = 80; for (let it = 0; it < 16; it++) { const mid = (lo + hi) / 2; setCam(vr, mid, yaw, pitch); let ok = true; for (const p of BOXP) { const s = project(p); if (s[0] < vr.x + 4 || s[0] > vr.x + vr.w - 4 || s[1] < vr.y + 4 || s[1] > vr.y + vr.h - 4) { ok = false; break; } } if (ok) hi = mid; else lo = mid; } setCam(vr, hi, yaw, pitch); }
+function render(dt) {
+  const vr = viewRect(); if (mode === 'menu') { viewYaw += dt * .12; } else { let d = yawTarget - viewYaw; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; viewYaw += d * (1 - Math.exp(-5 * dt)); }
+  const pitch = mode === 'menu' ? .62 : (W / H < .8 ? 1.12 : .98); fit(vr, viewYaw, pitch);
+  gl.viewport(0, 0, canvas.width, canvas.height); gl.clearColor(.1, .07, .05, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.CULL_FACE); gl.useProgram(MAIN.p); for (const i of [0, 1, 2, 3]) gl.enableVertexAttribArray(i);
+  gl.uniformMatrix4fv(U.uVP, false, VP); gl.uniform3fv(U.uCam, eyeP); gl.uniform1f(U.uTime, time); gl.uniform1f(U.uAlpha, 1);
+  const k = [.45, .9, .35], kl = Math.hypot(...k); gl.uniform3fv(U.uKey, k.map(v => v / kl)); gl.uniform3fv(U.uKeyC, [.85, .78, .66]); gl.uniform3fv(U.uSkyC, [.5, .47, .46]); gl.uniform3fv(U.uGndC, [.25, .2, .17]); gl.uniform3fv(U.uFogC, [.1, .07, .05]); gl.uniform1f(U.uFog, .018);
+  gl.activeTexture(gl.TEXTURE0); gl.uniform1i(U.uTex, 0); curTex = null;
+  draw(ENVM, I, TEXS.table, .15); draw(BOARD.frame, I, TEXS.wood, .3); draw(BOARD.label, I, TEXS.label, .2); draw(BOARD.L, I, TEXS.sqL, .25); draw(BOARD.D, I, TEXS.sqD, .25);
+  // highlights
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  const hl = (i, col, a, mesh = HL) => { gl.uniform1f(U.uAlpha, a); ident(M); translate(M, sqX(CH.F(i)), 0, sqZ(CH.Rk(i))); draw(mesh, M, cdot(col), 0); };
+  if (G) { const lm = G.hist.length ? G.hist[G.hist.length - 1].m : null; if (lm) { hl(lm.from, 'y', .38); hl(lm.to, 'y', .45); }
+    if (sel >= 0) hl(sel, 'g', .55);
+    for (const [t] of targets) { const occ = G.s.b[t] && !(G.s.b[t].c === G.s.turn); hl(t, 'g', .7, occ ? RING : DOT); }
+    const c = G.s.turn; if (CH.inCheck(G.s, c) && mode === 'play') hl(CH.kingSq(G.s, c), 'r', .45 + Math.sin(time * 8) * .15); }
+  gl.uniform1f(U.uAlpha, 1); gl.depthMask(true); gl.disable(gl.BLEND);
+  // pieces
+  if (G) { const animAt = new Map(anims.map(a => [a.to, a]));
+    for (let i = 0; i < 64; i++) { const p = G.s.b[i]; if (!p) continue; let x = sqX(CH.F(i)), z = sqZ(CH.Rk(i)), y = 0; const a = animAt.get(i);
+      if (a) { const t = ease(clamp(a.t / a.dur, 0, 1)); x = lerp(a.a[0], a.b[0], t); z = lerp(a.a[1], a.b[1], t); y = Math.sin(t * Math.PI) * a.hop; }
+      if (i === sel) y += .12 + Math.sin(time * 6) * .03;
+      ident(M); translate(M, x, y, z); if (p.t === 'n') rotY(M, p.c === 'w' ? Math.PI : 0); scale(M, 1.08, 1.08, 1.08); draw(PIECE_MESH[p.c + p.t], M, null, p.c === 'w' ? .5 : .9); }
+    for (const c of capFx) { const t = c.t / .5; ident(M); translate(M, c.pos[0], -t * .3, c.pos[1]); const s = 1.08 * (1 - t); scale(M, s, s, s); draw(PIECE_MESH[c.key], M, null, .5); } }
+  else { for (let f = 0; f < 8; f++) for (const [r, c, t] of [[0, 'w', 'rnbqkbnr'[f]], [1, 'w', 'p'], [6, 'b', 'p'], [7, 'b', 'rnbqkbnr'[f]]]) { ident(M); translate(M, sqX(f), 0, sqZ(r)); if (t === 'n') rotY(M, c === 'w' ? Math.PI : 0); scale(M, 1.08, 1.08, 1.08); draw(PIECE_MESH[c + t], M, null, .6); } }
+}
+const CDOT = {}; function cdot(k) { if (!CDOT[k]) { const c = newCanvas(4, 4), g = c.getContext('2d'); g.fillStyle = { y: '#ffe25a', g: '#5ad06a', r: '#ff2a3a' }[k]; g.fillRect(0, 0, 4, 4); CDOT[k] = glTex(c); } return CDOT[k]; }
+
+// ---------- Input ----------
+canvas.addEventListener('pointerdown', e => { audioInit(); if (mode !== 'play' || !G) return; const i = pickSquare(e.clientX, e.clientY); if (i >= 0) tapSquare(i); else selectSq(-1); });
+$('bFlip').onclick = () => { sfx('tap'); yawTarget += Math.PI; };
+$('bUndo').onclick = () => { if (!G || G.over || !G.hist.length || G.tc.base) { sfx('no'); return; } const k = CH.key(G.s); G.keys[k]--; const h = G.hist.pop(); G.s = h.s; anims = []; selectSq(-1); if (autoRot) yawTarget = G.s.turn === 'w' ? 0 : Math.PI; sfx('move'); refresh(); };
+$('bResign').onclick = () => { if (!G || G.over) return; const c = G.s.turn, name = G.names[c]; popup(`<div class="big2">🏳️</div><h2>${name} menyerah?</h2><p>Kalau menyerah, ${G.names[CH.opp(c)]} menang.</p><button class="btn red" id="pa" style="color:#fff">Ya, menyerah</button><button class="btn" id="pb">Batal</button>`);
+  $('pa').onclick = () => { show('pop', false); if (!CH.canMate(G.s, CH.opp(c))) finish('1/2-1/2', `${name} menyerah, tapi lawan sudah tidak mungkin skakmat, jadi hasilnya remis`); else finish(c === 'w' ? '0-1' : '1-0', `${name} menyerah 🏳️`); }; $('pb').onclick = () => show('pop', false); };
+$('bDraw').onclick = () => { if (!G || G.over) return; const c = G.s.turn; popup(`<div class="big2">🤝</div><h2>${G.names[c]} menawarkan remis</h2><p><b>${G.names[CH.opp(c)]}</b>, kamu setuju hasil seri?</p><button class="btn gold" id="pa">✅ Setuju remis</button><button class="btn" id="pb">❌ Tolak, lanjut main</button>`);
+  $('pa').onclick = () => { show('pop', false); finish('1/2-1/2', 'Remis atas kesepakatan kedua pemain'); }; $('pb').onclick = () => { show('pop', false); sfx('tap'); }; };
+$('bClaim').onclick = () => { const r = claimable(); if (r) finish('1/2-1/2', 'Remis diklaim: ' + r); };
+$('btnHome').onclick = () => { if (G && !G.over && G.hist.length) { popup(`<h2>Keluar ke menu?</h2><p>Permainan yang sedang berjalan akan berhenti.</p><button class="btn gold" id="pa">Ya, ke menu</button><button class="btn" id="pb">Lanjut main</button>`); $('pa').onclick = toMenu; $('pb').onclick = () => show('pop', false); } else toMenu(); };
+const refreshMute = () => { $('btnMute').textContent = AU.muted ? '🔇' : '🔊'; }; refreshMute();
+$('btnMute').onclick = () => { audioInit(); AU.muted = !AU.muted; store('csMuted', AU.muted ? '1' : '0'); if (AU.master) AU.master.gain.value = AU.muted ? 0 : .8; refreshMute(); };
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if (e.key === 'f') $('bFlip').click(); });
+// menu
+$('tcs').innerHTML = TCS.map(t => `<button data-id="${t.id}">${t.n}<small>${t.d}</small></button>`).join('');
+const markMenu = () => { document.querySelectorAll('#tcs button').forEach(b => b.classList.toggle('on', b.dataset.id === tcId)); document.querySelectorAll('#vars button').forEach(b => b.classList.toggle('on', +b.dataset.v === variant)); document.querySelectorAll('#rots button').forEach(b => b.classList.toggle('on', +b.dataset.v === (autoRot ? 1 : 0))); };
+document.querySelectorAll('#tcs button').forEach(b => b.onclick = () => { tcId = b.dataset.id; store('csTc', tcId); sfx('tap'); markMenu(); });
+document.querySelectorAll('#vars button').forEach(b => b.onclick = () => { variant = +b.dataset.v; store('csVar', variant); sfx('tap'); markMenu(); });
+document.querySelectorAll('#rots button').forEach(b => b.onclick = () => { autoRot = b.dataset.v === '1'; store('csRot', autoRot ? '1' : '0'); sfx('tap'); markMenu(); });
+markMenu(); $('inW').value = load('csW') || 'Shafa'; $('inB').value = load('csB') || 'Shaka';
+$('btnPlay').onclick = () => { audioInit(); store('csW', $('inW').value); store('csB', $('inB').value); sfx('tap'); newGame(); };
+$('btnRules').onclick = () => { sfx('tap'); show('rules', true); }; $('btnRulesClose').onclick = () => show('rules', false);
+
+// ---------- Loop ----------
+function step(dt) { time += dt;
+  for (const a of anims) a.t += dt; if (anims.length && anims.every(a => a.t >= a.dur)) anims = []; for (const c of capFx) c.t += dt; capFx = capFx.filter(c => c.t < .5);
+  if (mode === 'play' && G && !G.over && G.running && G.tc.base > 0 && !$('pop').classList.contains('hidden') === false) { const c = G.s.turn; G.clock[c] -= dt;
+    if (G.clock[c] <= 10 && Math.ceil(G.clock[c]) !== lastTick) { lastTick = Math.ceil(G.clock[c]); sfx('tick'); }
+    if (G.clock[c] <= 0) { G.clock[c] = 0; const o = CH.opp(c); if (CH.canMate(G.s, o)) finish(o === 'w' ? '1-0' : '0-1', `Waktu ${G.names[c]} habis ⏰`); else finish('1/2-1/2', `Waktu ${G.names[c]} habis, tapi lawan tidak mungkin skakmat (remis)`); }
+    updClock(); } }
+resize();
+setTimeout(() => { try { buildBoard(); buildPieces(); $('loading').classList.add('hidden'); } catch (e) { $('loading').textContent = 'Error: ' + e.message; throw e; }
+  let last = performance.now(), acc = 0, n = 0;
+  function frame(now) { requestAnimationFrame(frame); let dt = (now - last) / 1000; last = now; if (!(dt > 0)) dt = 1 / 60; dt = Math.min(dt, .05);
+    acc += dt; n++; if (acc > 2.5) { if (acc / n > 1 / 40 && renderScale > .75) { renderScale = Math.max(.75, renderScale - .35); resize(); } acc = 0; n = 0; }
+    step(dt); render(dt); }
+  requestAnimationFrame(frame); }, 30);
+</script>
+</body>
+</html>

@@ -199,6 +199,12 @@
   .kampung .ik { position: absolute; font-size: 34px; animation: bob 1s ease-in-out infinite alternate; }
   .kampung .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 35%, rgba(60,20,100,.8)); }
 
+  /* Catur card */
+  .catur { background: linear-gradient(160deg, #5a3418, #2a1e16); }
+  .catur .art { background-image: conic-gradient(#f0d9b5 25%, #b07a52 0 50%, #f0d9b5 0 75%, #b07a52 0); background-size: 40px 40px; opacity: .9; }
+  .catur .pz { position: absolute; font-size: 44px; color: #fff3dc; text-shadow: 0 3px 6px rgba(0,0,0,.6); animation: bob 1.2s ease-in-out infinite alternate; }
+  .catur .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 25%, rgba(20,10,4,.9)); }
+
   /* coming soon */
   .soon { background: rgba(255,255,255,.05); border: 2px dashed rgba(255,255,255,.3); box-shadow: none; justify-content: center; align-items: center; text-align: center; cursor: default; }
   .soon:hover { transform: none; box-shadow: none; }
@@ -332,6 +338,14 @@
       <div class="chips"><span class="chip">🏡 3 MINI GAME</span><span class="chip">3D · ALA PURBLE PLACE</span></div>
       <h2>Kampung Ceria Shafa</h2>
       <p>Pabrik kue di ban berjalan, tebak boneka rahasia, dan kartu kembar khas Indonesia!</p>
+      <span class="play">▶ MAIN</span>
+    </a>
+
+    <a class="card catur" href="shafa-catur.html">
+      <div class="art"><span class="pz" style="left:52%;top:6%">♔</span><span class="pz" style="left:70%;top:14%;color:#2a1e16;text-shadow:0 0 6px #fff;animation-delay:.4s">♛</span><span class="pz" style="left:86%;top:4%;animation-delay:.8s">♘</span></div>
+      <div class="chips"><span class="chip">♟️ CATUR 2 PEMAIN</span><span class="chip">3D · ATURAN FIDE</span></div>
+      <h2>Catur Shafa</h2>
+      <p>Catur 3D sesuai aturan resmi FIDE: rokade, en passant, jam Blitz/Rapid/Klasik, sampai Chess960!</p>
       <span class="play">▶ MAIN</span>
     </a>
 
