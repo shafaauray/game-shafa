@@ -164,6 +164,16 @@
   .jati .brd i { position: absolute; width: 18%; height: 22%; border-radius: 3px; background: var(--c); box-shadow: inset 0 0 0 2px rgba(255,220,150,.6), 0 3px 0 rgba(0,0,0,.4); }
   .jati .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 35%, rgba(25,12,4,.8)); }
 
+  /* Es Krim Shaka card */
+  .eskrim { background: linear-gradient(160deg, #ffc2d8, #ff8fb6 60%, #c9f0e2 60%); }
+  .eskrim .ic { position: absolute; left: 66%; top: 8%; width: 56px; animation: bob .9s ease-in-out infinite alternate; }
+  .eskrim .ic i { display: block; margin: 0 auto; }
+  .eskrim .s1, .eskrim .s2, .eskrim .s3 { width: 46px; height: 40px; border-radius: 50% 50% 40% 40%; margin-top: -12px !important; box-shadow: inset -6px -6px 0 rgba(0,0,0,.08); }
+  .eskrim .s3 { background: #f7a8bc; margin-top: 0 !important; position: relative; } .eskrim .s2 { background: #7a4224; } .eskrim .s1 { background: #f8eecb; }
+  .eskrim .s3::before { content: ""; position: absolute; left: 18px; top: -10px; width: 12px; height: 12px; border-radius: 50%; background: #d8102a; }
+  .eskrim .cn { width: 0; height: 0; border-left: 22px solid transparent; border-right: 22px solid transparent; border-top: 52px solid #e6b56a; margin-top: -6px !important; }
+  .eskrim .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(120,30,70,.75)); }
+
   /* coming soon */
   .soon { background: rgba(255,255,255,.05); border: 2px dashed rgba(255,255,255,.3); box-shadow: none; justify-content: center; align-items: center; text-align: center; cursor: default; }
   .soon:hover { transform: none; box-shadow: none; }
@@ -256,6 +266,14 @@
       <div class="chips"><span class="chip">🪵 PUZZLE BALOK</span><span class="chip">3D · NUANSA JAWA</span></div>
       <h2>Shafa Petak Jati 3D</h2>
       <p>Susun balok kayu batik di papan jati, ledakkan baris, kolom &amp; petak 3×3!</p>
+      <span class="play">▶ MAIN</span>
+    </a>
+
+    <a class="card eskrim" href="shafa-eskrim.html">
+      <div class="art"><div class="ic"><i class="s3"></i><i class="s2"></i><i class="s1"></i><i class="cn"></i></div></div>
+      <div class="chips"><span class="chip">🍦 KEDAI ES KRIM</span><span class="chip">3D · LEVEL HARIAN</span></div>
+      <h2>Es Krim Shaka</h2>
+      <p>Jadi kasir bareng Mas Shaka! Racik es krim sesuai pesanan Shafa, Aura, Shabrina &amp; Aqila: wadah, rasa, saus, topping!</p>
       <span class="play">▶ MAIN</span>
     </a>
 
