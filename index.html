@@ -189,6 +189,11 @@
   @keyframes swingl { from { transform: rotate(-25deg); } to { transform: rotate(25deg); } }
   .mancing .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(4,30,50,.85)); }
 
+  /* Kebun Bunga card */
+  .kebun { background: linear-gradient(#bfe6ff 0 30%, #8ccf6a 30%, #5aa848); }
+  .kebun .fl { position: absolute; font-size: 26px; animation: bob 1s ease-in-out infinite alternate; }
+  .kebun .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 35%, rgba(30,70,20,.85)); }
+
   /* coming soon */
   .soon { background: rgba(255,255,255,.05); border: 2px dashed rgba(255,255,255,.3); box-shadow: none; justify-content: center; align-items: center; text-align: center; cursor: default; }
   .soon:hover { transform: none; box-shadow: none; }
@@ -306,6 +311,14 @@
       <div class="chips"><span class="chip">🎣 MANCING DUEL</span><span class="chip">3D · VS KOMPUTER</span></div>
       <h2>Shafa Mancing Duel</h2>
       <p>Adu mancing lawan komputer! Kejar tuna, mutiara &amp; peti harta, tapi awas barakuda, hiu &amp; ubur-ubur!</p>
+      <span class="play">▶ MAIN</span>
+    </a>
+
+    <a class="card kebun" href="shafa-kebun.html">
+      <div class="art"><span class="fl" style="left:52%;top:10%;animation-delay:0s">🌺</span><span class="fl" style="left:66%;top:22%;animation-delay:0.3s">🌸</span><span class="fl" style="left:80%;top:8%;animation-delay:0.6s">🌼</span><span class="fl" style="left:58%;top:34%;animation-delay:0.2s">💮</span><span class="fl" style="left:74%;top:40%;animation-delay:0.5s">🪷</span><span class="fl" style="left:88%;top:28%;animation-delay:0.1s">🌷</span></div>
+      <div class="chips"><span class="chip">🌸 PETANI BUNGA</span><span class="chip">3D · 9 LADANG</span></div>
+      <h2>Kebun Bunga Shafa</h2>
+      <p>Panen melati, anggrek bulan sampai rafflesia, rangkai buket buat Shaka &amp; Shabrina, lalu beli ladang baru!</p>
       <span class="play">▶ MAIN</span>
     </a>
 
