@@ -180,6 +180,15 @@
   .aksara .hc { position: absolute; left: 50%; top: 14%; font-size: 40px; line-height: 1.4; color: #e3b23e; text-shadow: 0 2px 0 #6a3a10; font-family: "Noto Sans Javanese", "Javanese Text", serif; white-space: nowrap; transform: translateX(-10%); animation: bob 1.4s ease-in-out infinite alternate; }
   .aksara .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 35%, rgba(20,8,2,.85)); }
 
+  /* Mancing Duel card */
+  .mancing { background: linear-gradient(#7fd0ff 0 38%, #1a8ab8 38%, #0a4a6a); }
+  .mancing .bt { position: absolute; top: 24%; width: 60px; height: 16px; border-radius: 0 0 40px 40px; background: #fff; box-shadow: inset 0 -5px 0 #ff5e94; animation: bob 1.2s ease-in-out infinite alternate; }
+  .mancing .bt.c { box-shadow: inset 0 -5px 0 #2a8ad0; animation-delay: .5s; }
+  .mancing .ln { position: absolute; top: 12%; width: 2px; height: 46%; background: rgba(255,255,255,.8); transform-origin: top; animation: swingl 1.6s ease-in-out infinite alternate; }
+  .mancing .fs { position: absolute; font-size: 26px; animation: swim 4s linear infinite; }
+  @keyframes swingl { from { transform: rotate(-25deg); } to { transform: rotate(25deg); } }
+  .mancing .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgba(4,30,50,.85)); }
+
   /* coming soon */
   .soon { background: rgba(255,255,255,.05); border: 2px dashed rgba(255,255,255,.3); box-shadow: none; justify-content: center; align-items: center; text-align: center; cursor: default; }
   .soon:hover { transform: none; box-shadow: none; }
@@ -290,6 +299,14 @@
       <h2>Shafa Hanacaraka</h2>
       <p>Ketik kalimat bahasa apa aja, diterjemahin ke Basa Jawa atau ditulis ulang jadi aksara Jawa, plus bisa didengerin!</p>
       <span class="play">▶ COBA</span>
+    </a>
+
+    <a class="card mancing" href="shafa-mancing.html">
+      <div class="art"><div class="bt" style="left:14%"></div><div class="bt c" style="right:14%"></div><div class="ln" style="left:38%"></div><div class="ln" style="right:38%;animation-delay:.8s"></div><div class="fs" style="top:52%">🐠</div><div class="fs" style="top:66%;animation-delay:-2s">🐟</div></div>
+      <div class="chips"><span class="chip">🎣 MANCING DUEL</span><span class="chip">3D · VS KOMPUTER</span></div>
+      <h2>Shafa Mancing Duel</h2>
+      <p>Adu mancing lawan komputer! Kejar tuna, mutiara &amp; peti harta, tapi awas barakuda, hiu &amp; ubur-ubur!</p>
+      <span class="play">▶ MAIN</span>
     </a>
 
     <div class="card soon">
